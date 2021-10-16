@@ -49,11 +49,11 @@
                     <div class="tile tile-centered">
                         <div class="tile-content">
                             <div class="tile-title text-bold">Current Room</div>
-                            <input class="btn" type="text" id="current_room" placeholder="----">
+                            <input class="btn current_room" type="text" id="current_room" placeholder="----">
                         </div>
                         <div class="tile-action">
-                            <button class="btn btn-link btn-action btn-lg tooltip tooltip-left" id="set_room_id"
-                                data-tooltip="Set Room ID"><i class="icon icon-check"></i></button>
+                            <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_room_id"
+                                data-tooltip="Set Room ID">Set</button>
                         </div>
                     </div>
                     <div class="tile tile-centered">
@@ -98,8 +98,8 @@
                 console.log(resp);
                 let respData = JSON.parse(resp);
 
-                writeClass('hw_id', respData['hw_data']);
-                writeClass('current_room', respData['current_room']);
+                writeClass('hw_id', respData['hw_id']);
+                writeValue('current_room', respData['current_room']);
                 writeClass('date_created', respData['date_created']);
                 writeClass('last_used', respData['last_used']);
 

@@ -27,8 +27,8 @@ function httpPostAsync(theUrl, data, callback, failCallback) {
         }
     }
     xmlHttp.open("POST", theUrl, true); // true for asynchronous 
-    http.setRequestHeader('Content-type', 'application/json');
-    xmlHttp.send(data);
+    xmlHttp.setRequestHeader('Content-type', 'application/json');
+    xmlHttp.send(JSON.stringify(data));
 }
 
 function getCookie(cname) {
@@ -64,6 +64,17 @@ function writeId(idName, data) {
     }
 
     document.getElementById(idName).innerHTML = data;
+}
+
+function writeValue(className, data) {
+    if (data == undefined || data == null || data.toString() == 'undefined') {
+        data = "";
+    }
+
+    let elements = document.getElementsByClassName(className);
+    Array.from(elements).forEach(e => {
+        e.value = data;
+    });
 }
 
 

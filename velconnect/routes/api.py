@@ -92,7 +92,7 @@ def get_headset_details(hw_id):
     if len(values) == 1:
         return jsonify(values[0])
     else:
-        return jsonify({'error', "Can't find headset with that id."}), 400
+        return jsonify({'error': "Can't find headset with that id."}), 400
 
 
 def get_headset_details_db(hw_id):
@@ -113,15 +113,12 @@ def set_headset_details(hw_id):
 
 
 def set_headset_details_db(hw_id, data):
+    logger.error(data)
     conn, curr = connectToDB()
     query = """
-    INSERT INTO `Headset`(
-        `hw_id`,
-        `current_room`
-    ) VALUES(
-        %(hw_id)s,
-        %(current_room)s
-    );
+    UPDATE `Headset`
+    SET `current_room` = %(current_room)s    
+    WHERE `hw_id` = %(hw_id)s;
     """
     data['hw_id'] = hw_id
     curr.execute(query, data)
