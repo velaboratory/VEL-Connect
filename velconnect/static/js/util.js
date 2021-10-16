@@ -29,3 +29,34 @@ function getCookie(cname) {
     }
     return "";
 }
+
+function writeClass(className, data) {
+    if (data == undefined || data == null || data.toString() == 'undefined') {
+        data = "";
+    }
+
+    let elements = document.getElementsByClassName(className);
+    Array.from(elements).forEach(e => {
+        e.innerHTML = data;
+    });
+}
+
+function writeId(idName, data) {
+    if (data == undefined || data == null || data.toString() == 'undefined') {
+        data = "";
+    }
+
+    document.getElementById(idName).innerHTML = data;
+}
+
+
+function writeSrc(className, data) {
+    if (data == undefined || data == null || data.toString() == 'undefined') {
+        data = "";
+    }
+
+    let elements = document.getElementsByClassName(className);
+    Array.from(elements).forEach(e => {
+        e.src = data;
+    });
+}

@@ -34,12 +34,41 @@
     <div class="container">
 
         <div id="loading" class="loading loading-lg"></div>
-        <div id="failure">☹️</div>
+        <div id="failure" style="display: none;">☹️</div>
 
 
         <div id="headset_details" style="display: none;">
-            <h2>HW ID</h2>
-            <p id="hw_id"></p>
+            <div class="panel">
+                <div class="panel-header text-center">
+                    <figure class="avatar avatar-lg"><img src="static/favicon/android-chrome-192x192.png" alt="Avatar"></figure>
+                    <div class="panel-title h5 mt-10">Headset Info</div>
+                    <div class="panel-subtitle hw_id">---</div>
+                </div>
+                <div class="panel-body">
+                    <div class="tile tile-centered">
+                        <div class="tile-content">
+                            <div class="tile-title text-bold">Current Room</div>
+                            <input class="btn" type="text" id="current_room" placeholder="----">
+                        </div>
+                        <div class="tile-action">
+                            <button class="btn btn-link btn-action btn-lg tooltip tooltip-left"
+                                data-tooltip="Set Room ID"><i class="icon icon-send"></i></button>
+                        </div>
+                    </div>
+                    <div class="tile tile-centered">
+                        <div class="tile-content">
+                            <div class="tile-title text-bold">First Added</div>
+                            <div class="tile-subtitle date_created">---</div>
+                        </div>
+                    </div>
+                    <div class="tile tile-centered">
+                        <div class="tile-content">
+                            <div class="tile-title text-bold">Last Used</div>
+                            <div class="tile-subtitle last_used">---</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -62,9 +91,12 @@
             httpGetAsync('/api/get_headset_details/' + hw_id, (resp) => {
                 console.log(resp);
                 let respData = JSON.parse(resp);
-                if (respData['hw_id'] != '') {
-                    hw_id_field.innerText = respData['hw_id'];
-                }
+                
+                writeClass('hw_id', respData['hw_data']);
+                writeClass('current_room', respData['current_room']);
+                writeClass('date_created', respData['date_created']);
+                writeClass('last_used', respData['last_used']);
+
                 headset_details.style.display = "block";
             }, (status) => {
                 failure.style.display = "block";

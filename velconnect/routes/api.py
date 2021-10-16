@@ -10,7 +10,6 @@ from random import random
 bp = Blueprint('api', __name__)
 
 
-
 @bp.route('/', methods=['GET'])
 @require_api_key(0)
 def api_home():
@@ -21,7 +20,6 @@ def api_home():
 @require_api_key(0)
 def api_spec():
     return send_from_directory('static', 'api_spec.json')
-
 
 
 @bp.route('/get_all_headsets', methods=['GET'])
@@ -86,23 +84,50 @@ def update_paring_code():
 
     return 'Success'
 
-    
 
 @bp.route('/get_headset_details/<hw_id>', methods=['GET'])
 @require_api_key(10)
 def get_headset_details(hw_id):
-    return jsonify(get_headset_details_db(hw_id))
+    values = get_headset_details_db(hw_id)
+    if len(values) == 1:
+        return jsonify(values[0])
+    else:
+        return jsonify({'error', "Can't find headset with that id."}), 400
 
 
 def get_headset_details_db(hw_id):
     conn, curr = connectToDB()
     query = """
-    SELECT * FROM `Headset` WHERE hw_id=%(hw_id)s;
+    SELECT * FROM `Headset` WHERE `hw_id`=%(hw_id)s;
     """
     curr.execute(query, {'hw_id': hw_id})
     values = [dict(row) for row in curr.fetchall()]
     curr.close()
-    return jsonify(values)
+    return values
+
+
+@bp.route('/set_headset_details/<hw_id>', methods=['POST'])
+@require_api_key(10)
+def set_headset_details(hw_id):
+    return set_headset_details_db(hw_id, request.json)
+
+
+def set_headset_details_db(hw_id, data):
+    conn, curr = connectToDB()
+    query = """
+    INSERT INTO `Headset`(
+        `hw_id`,
+        `current_room`
+    ) VALUES(
+        %(hw_id)s,
+        %(current_room)s
+    );
+    """
+    data['hw_id'] = hw_id
+    curr.execute(query, data)
+    conn.commit()
+    curr.close()
+    return 'Success'
 
 
 @bp.route('/get_room_details/<room_id>', methods=['GET'])
@@ -122,13 +147,13 @@ def get_room_details_db(room_id):
     return jsonify(values)
 
 
-@bp.route('/update_room/<room_id>', methods=['POST'])
+@bp.route('/set_room_details/<room_id>', methods=['POST'])
 @require_api_key(10)
-def update_room(room_id):
-    return jsonify(update_room_db(room_id, request.json))
+def set_room_details(room_id):
+    return jsonify(set_room_details_db(room_id, request.json))
 
 
-def update_room_db(room_id, data):
+def set_room_details_db(room_id, data):
     room_id = random.randint(0, 9999)
     conn, curr = connectToDB()
     query = """
