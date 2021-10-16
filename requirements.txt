@@ -2,3 +2,4 @@ flask
 simplejson
 Flask-Limiter
 pymysql
+gunicorn

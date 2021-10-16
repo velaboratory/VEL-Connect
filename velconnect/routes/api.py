@@ -22,7 +22,7 @@ def get_all_headsets():
     return jsonify(values)
 
 
-@bp.route('/pair_headset/<pairing_code>', methods=['POST'])
+@bp.route('/pair_headset/<pairing_code>', methods=['GET'])
 @require_api_key(0)
 def pair_headset(pairing_code):
     conn, curr = connectToDB()
@@ -32,8 +32,9 @@ def pair_headset(pairing_code):
     curr.execute(query, {'pairing_code': pairing_code})
     values = [dict(row) for row in curr.fetchall()]
     curr.close()
-    if len(values) > 0:
-        return jsonify({'hw_id': values['hw_id']})
+    if len(values) == 1:
+        print(values[0]['hw_id'])
+        return jsonify({'hw_id': values[0]['hw_id']})
     return 'Not found', 400
 
 
@@ -62,7 +63,7 @@ def update_paring_code():
         %(pairing_code)s,
         CURRENT_TIMESTAMP
     ) 
-    ON DUPLICATE UPDATE 
+    ON DUPLICATE KEY UPDATE 
         pairing_code=%(pairing_code)s,
         last_used=CURRENT_TIMESTAMP;
     """

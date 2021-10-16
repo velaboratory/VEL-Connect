@@ -1,3 +1,6 @@
 env/
 app.log
 __pycache__/
+gunicorn.err.log
+gunicorn.log
+config_mysql.py

@@ -12,9 +12,10 @@ limiter = Limiter(key_func=get_remote_address)
 def require_api_key(level):
     def decorator(view_function):
         def wrapper(*args, **kwargs):
+            return view_function(*args, **kwargs)
             key = request.headers.get('x-api-key')
 
-            conn, curr = connectToDB(request)
+            conn, curr = connectToDB()
             query = """
             SELECT * FROM `APIKey` WHERE `key`=%(key)s;
             """
