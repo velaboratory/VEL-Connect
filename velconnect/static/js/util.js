@@ -14,6 +14,23 @@ function httpGetAsync(theUrl, callback, failCallback) {
     xmlHttp.send(null);
 }
 
+
+function httpPostAsync(theUrl, data, callback, failCallback) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState == 4) {
+            if (xmlHttp.status == 200) {
+                callback(xmlHttp.responseText);
+            } else {
+                failCallback(xmlHttp.status);
+            }
+        }
+    }
+    xmlHttp.open("POST", theUrl, true); // true for asynchronous 
+    http.setRequestHeader('Content-type', 'application/json');
+    xmlHttp.send(data);
+}
+
 function getCookie(cname) {
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);

@@ -38,9 +38,10 @@
 
 
         <div id="headset_details" style="display: none;">
-            <div class="panel">
+            <div class="panel card">
                 <div class="panel-header text-center">
-                    <figure class="avatar avatar-lg"><img src="static/favicon/android-chrome-192x192.png" alt="Avatar"></figure>
+                    <figure class="avatar avatar-lg"><img src="/static/favicons/android-chrome-192x192.png"
+                            alt="Avatar"></figure>
                     <div class="panel-title h5 mt-10">Headset Info</div>
                     <div class="panel-subtitle hw_id">---</div>
                 </div>
@@ -51,8 +52,8 @@
                             <input class="btn" type="text" id="current_room" placeholder="----">
                         </div>
                         <div class="tile-action">
-                            <button class="btn btn-link btn-action btn-lg tooltip tooltip-left"
-                                data-tooltip="Set Room ID"><i class="icon icon-send"></i></button>
+                            <button class="btn btn-link btn-action btn-lg tooltip tooltip-left" id="set_room_id"
+                                data-tooltip="Set Room ID"><i class="icon icon-check"></i></button>
                         </div>
                     </div>
                     <div class="tile tile-centered">
@@ -67,6 +68,9 @@
                             <div class="tile-subtitle last_used">---</div>
                         </div>
                     </div>
+                    <br>
+                    <br>
+                    <br>
                 </div>
             </div>
         </div>
@@ -81,6 +85,8 @@
         let headset_details = document.getElementById('headset_details');
         let hw_id_field = document.getElementById('hw_id');
         let failure = document.getElementById('failure');
+        let set_room_id = document.getElementById('set_room_id');
+        let current_room = document.getElementById('current_room');
 
 
         // check cookie
@@ -91,7 +97,7 @@
             httpGetAsync('/api/get_headset_details/' + hw_id, (resp) => {
                 console.log(resp);
                 let respData = JSON.parse(resp);
-                
+
                 writeClass('hw_id', respData['hw_data']);
                 writeClass('current_room', respData['current_room']);
                 writeClass('date_created', respData['date_created']);
@@ -100,6 +106,19 @@
                 headset_details.style.display = "block";
             }, (status) => {
                 failure.style.display = "block";
+            });
+
+            set_room_id.addEventListener('click', () => {
+                httpPostAsync('/api/set_headset_details/' + hw_id,
+                    {
+                        "current_room": current_room.value
+                    },
+                    (resp) => {
+                        console.log('success');
+                    },
+                    (status) => {
+                        console.log('fail');
+                    });
             });
 
         } else {
