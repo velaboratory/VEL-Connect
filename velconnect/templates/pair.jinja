@@ -1,7 +1,19 @@
 <html>
 
 <head>
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicons/site.webmanifest">
+    <link rel="mask-icon" href="/static/favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#b91d47">
+    <meta name="theme-color" content="#ffffff">
+
+
+
     <link rel="stylesheet" href="/static/css/spectre.min.css">
+    <script src="/static/js/util.js"></script>
     <style>
         #pair_code {
             max-width: 4em;
@@ -49,19 +61,6 @@
     </div>
 
     <script>
-        function httpGetAsync(theUrl, callback, failCallback) {
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    callback(xmlHttp.responseText);
-                }
-                else {
-                    failCallback(xmlHttp.status);
-                }
-            }
-            xmlHttp.open("GET", theUrl, true); // true for asynchronous 
-            xmlHttp.send(null);
-        }
 
         let submit_button = document.getElementById('submit_pairing_code');
         let pair_code_input = document.getElementById('pair_code');
@@ -70,7 +69,7 @@
                 console.log(resp);
                 let respData = JSON.parse(resp);
                 if (respData['hw_id'] != '') {
-                    document.cookie = "hw_id="+respData['hw_id'];
+                    document.cookie = "hw_id=" + respData['hw_id'] + "; SameSite=None; Secure";
                     window.location.href = "/success";
                 }
             }, (status) => {
