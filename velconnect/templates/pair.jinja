@@ -1,0 +1,83 @@
+<html>
+
+<head>
+    <link rel="stylesheet" href="/static/css/spectre.min.css">
+    <style>
+        #pair_code {
+            max-width: 4em;
+        }
+
+        .container {
+            max-width: 30em;
+        }
+
+        .card {
+            margin: 1em;
+            box-shadow: 0 0 2em #0003;
+        }
+
+        .centered {
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- <div class="hero bg-gray">
+            <div class="hero-body">
+                <h1>Pair your headset.</h1>
+            </div>
+        </div> -->
+
+        <div class="card">
+            <div class="card-image">
+                <img src="/static/img/pair_code_screenshot.png" class="img-responsive">
+            </div>
+            <div class="card-header">
+                <div class="card-title h5">Enter Pairing Code</div>
+                <div class="card-subtitle text-gray"></div>
+            </div>
+            <div class="card-body">
+                You can find the code in the bottom left of your menu tablet in conVRged.
+            </div>
+            <div class="card-footer centered">
+                <input class="btn" type="text" id="pair_code" placeholder="0000">
+                <button class="btn btn-primary" id="submit_pairing_code">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function httpGetAsync(theUrl, callback, failCallback) {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    callback(xmlHttp.responseText);
+                }
+                else {
+                    failCallback(xmlHttp.status);
+                }
+            }
+            xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+            xmlHttp.send(null);
+        }
+
+        let submit_button = document.getElementById('submit_pairing_code');
+        let pair_code_input = document.getElementById('pair_code');
+        submit_button.addEventListener('click', () => {
+            httpGetAsync('/api/pair_headset/' + pair_code_input.value, (resp) => {
+                console.log(resp);
+                let respData = JSON.parse(resp);
+                if (respData['hw_id'] != '') {
+                    document.cookie = "hw_id="+respData['hw_id'];
+                    window.location.href = "/success";
+                }
+            }, (status) => {
+                window.location.href = "/failure";
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,4 @@
+MYSQL_DATABASE_USER = 'root'
+MYSQL_DATABASE_PASSWORD = 'w2e3t5t5'
+MYSQL_DATABASE_HOST = 'localhost'
+MYSQL_DATABASE_DB = 'vel_headset_pairing'
