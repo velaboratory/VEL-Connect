@@ -88,11 +88,11 @@ def update_paring_code():
 @bp.route('/get_headset_details/<hw_id>', methods=['GET'])
 @require_api_key(10)
 def get_headset_details(hw_id):
-    values = get_headset_details_db(hw_id)
-    if len(values) == 1:
-        return jsonify(values[0])
-    else:
+    data = get_headset_details_db(hw_id)
+    if data is None:
         return jsonify({'error': "Can't find headset with that id."}), 400
+    else:
+        return jsonify(data)
 
 
 def get_headset_details_db(hw_id):
@@ -101,9 +101,14 @@ def get_headset_details_db(hw_id):
     SELECT * FROM `Headset` WHERE `hw_id`=%(hw_id)s;
     """
     curr.execute(query, {'hw_id': hw_id})
-    values = [dict(row) for row in curr.fetchall()]
+    headsets = [dict(row) for row in curr.fetchall()]
     curr.close()
-    return values
+    if len(headsets) == 0:
+        return None
+
+    room = get_room_details_db(headsets[0]['current_room'])
+
+    return {'user': headsets[0], 'room': room}
 
 
 @bp.route('/set_headset_details/<hw_id>', methods=['POST'])
@@ -117,7 +122,9 @@ def set_headset_details_db(hw_id, data):
     conn, curr = connectToDB()
     query = """
     UPDATE `Headset`
-    SET `current_room` = %(current_room)s    
+    SET `current_room` = %(current_room)s,
+    `user_color` = %(user_color)s,
+    `user_name` = %(user_name)s
     WHERE `hw_id` = %(hw_id)s;
     """
     data['hw_id'] = hw_id
@@ -141,7 +148,10 @@ def get_room_details_db(room_id):
     curr.execute(query, {'room_id': room_id})
     values = [dict(row) for row in curr.fetchall()]
     curr.close()
-    return jsonify(values)
+    if len(values) == 1:
+        return values[0]
+    else:
+        return None
 
 
 @bp.route('/set_room_details/<room_id>', methods=['POST'])
@@ -161,4 +171,38 @@ def set_room_details_db(room_id, data):
     curr.execute(query, {'room_id': room_id})
     conn.commit()
     curr.close()
-    return jsonify({'room_id': room_id})
+    return {'room_id': room_id}
+
+
+@bp.route('/set_room_details/<room_id>/tv_url', methods=['POST'])
+@require_api_key(10)
+def set_room_details_tv_url(room_id):
+    conn, curr = connectToDB()
+    query = """
+    UPDATE `Room`
+    SET `tv_url` = %(tv_url)s
+    WHERE `room_id` = %(room_id)s;
+    """
+    data = request.json
+    data['room_id'] = room_id
+    curr.execute(query, data)
+    conn.commit()
+    curr.close()
+    return {'room_id': room_id}
+
+
+@bp.route('/set_room_details/<room_id>/carpet_color', methods=['POST'])
+@require_api_key(10)
+def set_room_details_carpet_color(room_id):
+    conn, curr = connectToDB()
+    query = """
+    UPDATE `Room`
+    SET `tv_url` = %(tv_url)s
+    WHERE `carpet_color` = %(carpet_color)s;
+    """
+    data = request.json
+    data['room_id'] = room_id
+    curr.execute(query, data)
+    conn.commit()
+    curr.close()
+    return {'room_id': room_id}
