@@ -17,8 +17,8 @@ def create_app():
     from .routes import api
     app.register_blueprint(api.bp, url_prefix='/api')
 
-    # from .routes import website
-    # app.register_blueprint(website.bp)
+    from .routes import website
+    app.register_blueprint(website.bp)
 
     # Error handlers
     app.register_error_handler(404, resource_not_found)

@@ -10,6 +10,11 @@ from random import random
 bp = Blueprint('api', __name__)
 
 
+@bp.route('/', methods=['GET'])
+def index():
+    return render_template('api.html')
+
+
 @bp.route('/api_spec.json', methods=['GET'])
 @require_api_key(0)
 def api_spec():

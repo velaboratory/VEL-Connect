@@ -9,19 +9,19 @@ bp = Blueprint('website', __name__, template_folder='templates')
 
 @bp.route('/', methods=['GET'])
 def index():
-    return render_template('index.jinja')
+    return render_template('index.html')
 
 
 @bp.route('/pair', methods=['GET'])
 def pair():
-    return render_template('pair.jinja')
+    return render_template('pair.html')
 
 
 @bp.route('/success', methods=['GET'])
 def success():
-    return render_template('success.jinja')
+    return render_template('success.html')
 
 
 @bp.route('/failure', methods=['GET'])
 def failure():
-    return render_template('failure.jinja')
+    return render_template('failure.html')
