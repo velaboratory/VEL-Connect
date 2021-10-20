@@ -142,11 +142,11 @@
                 writeValue('current_room', respData['user']['current_room']);
                 writeClass('date_created', respData['user']['date_created']);
                 writeClass('last_used', respData['user']['last_used']);
-                writeClass('user_color', respData['user']['user_color']);
-                writeClass('user_name', respData['user']['user_name']);
+                writeValue('user_color', respData['user']['user_color']);
+                writeValue('user_name', respData['user']['user_name']);
                 if (respData['room']) {
-                    writeClass('tv_url', respData['room']['tv_url']);
-                    writeClass('carpet_color', respData['room']['carpet_color']);
+                    writeValue('tv_url', respData['room']['tv_url']);
+                    writeValue('carpet_color', respData['room']['carpet_color']);
                 }
 
                 headset_details.style.display = "block";
@@ -154,8 +154,15 @@
                 failure.style.display = "block";
             });
 
-            function setData(endpoint, data) {
+            function setUserData(endpoint, data) {
                 httpPostAsync('/api/set_headset_details/' + hw_id + '/' + endpoint,
+                    data,
+                    (resp) => {console.log('success');},
+                    (status) => {console.log('fail');}
+                );
+            }
+            function setRoomData(endpoint, data) {
+                httpPostAsync('/api/set_room_details/' + current_room.value + '/' + endpoint,
                     data,
                     (resp) => {console.log('success');},
                     (status) => {console.log('fail');}
@@ -163,16 +170,16 @@
             }
 
             set_room_id.addEventListener('click', () => {
-                setData('current_room', {"current_room": current_room.value});
-            });
-            document.getElementById('set_tv_url').addEventListener('click', () => {
-                setData('tv_url', {"tv_url": document.getElementById('tv_url').value});
+                setUserData('current_room', {"current_room": current_room.value});
             });
             document.getElementById('set_user_color').addEventListener('click', () => {
-                setData('user_color', {"user_color": document.getElementById('user_color').value});
+                setUserData('user_color', {"user_color": document.getElementById('user_color').value});
+            });
+            document.getElementById('set_tv_url').addEventListener('click', () => {
+                setRoomData('tv_url', {"tv_url": document.getElementById('tv_url').value});
             });
             document.getElementById('set_carpet_color').addEventListener('click', () => {
-                setData('carpet_color', {"carpet_color": document.getElementById('carpet_color').value});
+                setRoomData('carpet_color', {"carpet_color": document.getElementById('carpet_color').value});
             });
 
         } else {

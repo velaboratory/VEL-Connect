@@ -158,8 +158,7 @@ def set_headset_details_user_color(hw_id):
     conn, curr = connectToDB()
     query = """
     UPDATE `Headset`
-    SET `user_color` = %(user_color)s,
-    `last_modified = CURRENT_TIMESTAMP
+    SET `user_color` = %(user_color)s
     WHERE `hw_id` = %(hw_id)s;
     """
     data = request.json
@@ -207,12 +206,13 @@ def set_room_details_db(room_id, data):
     conn.commit()
     curr.close()
     return {'room_id': room_id}
-    
+
 
 def create_room(room_id):
     conn, curr = connectToDB()
     query = """
-    INSERT IGNORE INTO `Room` VALUES(
+    INSERT IGNORE INTO `Room`(room_id) 
+    VALUES(
         %(room_id)s
     );
     """
@@ -221,6 +221,7 @@ def create_room(room_id):
     curr.close()
     return {'room_id': room_id}
 
+
 @bp.route('/set_room_details/<room_id>/tv_url', methods=['POST'])
 @require_api_key(10)
 def set_room_details_tv_url(room_id):
@@ -228,7 +229,7 @@ def set_room_details_tv_url(room_id):
     query = """
     UPDATE `Room`
     SET `tv_url` = %(tv_url)s,
-    `last_modified = CURRENT_TIMESTAMP
+    `last_modified` = CURRENT_TIMESTAMP
     WHERE `room_id` = %(room_id)s;
     """
     data = request.json
@@ -246,7 +247,7 @@ def set_room_details_carpet_color(room_id):
     query = """
     UPDATE `Room`
     SET `tv_url` = %(tv_url)s,
-    `last_modified = CURRENT_TIMESTAMP
+    `last_modified` = CURRENT_TIMESTAMP
     WHERE `room_id` = %(room_id)s;
     """
     data = request.json
