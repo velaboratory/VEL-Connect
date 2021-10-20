@@ -224,9 +224,7 @@ def set_room_details_db(room_id, data):
     curr.execute(query, {'room_id': room_id})
     conn.commit()
     curr.close()
-    response = {'room_id': room_id}
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return {'room_id': room_id}
 
 
 def create_room(room_id):
@@ -240,9 +238,7 @@ def create_room(room_id):
     curr.execute(query, {'room_id': room_id})
     conn.commit()
     curr.close()
-    response = {'room_id': room_id}
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return {'room_id': room_id}
 
 
 @bp.route('/set_room_details/<room_id>/tv_url', methods=['POST'])
@@ -260,7 +256,7 @@ def set_room_details_tv_url(room_id):
     curr.execute(query, data)
     conn.commit()
     curr.close()
-    response = {'room_id': room_id}
+    response = jsonify({'room_id': room_id})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
@@ -280,6 +276,6 @@ def set_room_details_carpet_color(room_id):
     curr.execute(query, data)
     conn.commit()
     curr.close()
-    response = {'room_id': room_id}
+    response = jsonify({'room_id': room_id})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
