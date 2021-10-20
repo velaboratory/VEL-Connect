@@ -10,16 +10,12 @@ from random import random
 bp = Blueprint('api', __name__)
 
 
-@bp.route('/', methods=['GET'])
-@require_api_key(0)
-def api_home():
-    return render_template('api_spec.html')
-
-
 @bp.route('/api_spec.json', methods=['GET'])
 @require_api_key(0)
 def api_spec():
-    return send_from_directory('static', 'api_spec.json')
+    response = send_from_directory('static', 'api_spec.json')
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/get_all_headsets', methods=['GET'])
@@ -47,7 +43,9 @@ def pair_headset(pairing_code):
     curr.close()
     if len(values) == 1:
         print(values[0]['hw_id'])
-        return jsonify({'hw_id': values[0]['hw_id']})
+        response = jsonify({'hw_id': values[0]['hw_id']})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
     return 'Not found', 400
 
 
@@ -82,7 +80,9 @@ def update_paring_code():
     conn.commit()
     curr.close()
 
-    return 'Success'
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/get_state/<hw_id>', methods=['GET'])
@@ -90,9 +90,13 @@ def update_paring_code():
 def get_headset_details(hw_id):
     data = get_headset_details_db(hw_id)
     if data is None:
-        return jsonify({'error': "Can't find headset with that id."}), 400
+        response = jsonify({'error': "Can't find headset with that id."})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
     else:
-        return jsonify(data)
+        response = jsonify(data)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
 
 
 def get_headset_details_db(hw_id):
@@ -132,7 +136,9 @@ def set_headset_details_db(hw_id, data):
 
     create_room(data['current_room'])
 
-    return 'Success'
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/set_headset_details/<hw_id>/user_name', methods=['POST'])
@@ -149,7 +155,9 @@ def set_headset_details_user_name(hw_id):
     curr.execute(query, data)
     conn.commit()
     curr.close()
-    return 'Success'
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/set_headset_details/<hw_id>/user_color', methods=['POST'])
@@ -166,13 +174,17 @@ def set_headset_details_user_color(hw_id):
     curr.execute(query, data)
     conn.commit()
     curr.close()
-    return 'Success'
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/get_room_details/<room_id>', methods=['GET'])
 @require_api_key(10)
 def get_room_details(room_id):
-    return jsonify(get_room_details_db(room_id))
+    response = jsonify(get_room_details_db(room_id))
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 def get_room_details_db(room_id):
@@ -192,7 +204,9 @@ def get_room_details_db(room_id):
 @bp.route('/set_room_details/<room_id>', methods=['POST'])
 @require_api_key(10)
 def set_room_details(room_id):
-    return jsonify(set_room_details_db(room_id, request.json))
+    response = jsonify(set_room_details_db(room_id, request.json))
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 def set_room_details_db(room_id, data):
@@ -205,7 +219,9 @@ def set_room_details_db(room_id, data):
     curr.execute(query, {'room_id': room_id})
     conn.commit()
     curr.close()
-    return {'room_id': room_id}
+    response = {'room_id': room_id}
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 def create_room(room_id):
@@ -219,7 +235,9 @@ def create_room(room_id):
     curr.execute(query, {'room_id': room_id})
     conn.commit()
     curr.close()
-    return {'room_id': room_id}
+    response = {'room_id': room_id}
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/set_room_details/<room_id>/tv_url', methods=['POST'])
@@ -237,7 +255,9 @@ def set_room_details_tv_url(room_id):
     curr.execute(query, data)
     conn.commit()
     curr.close()
-    return {'room_id': room_id}
+    response = {'room_id': room_id}
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/set_room_details/<room_id>/carpet_color', methods=['POST'])
@@ -255,4 +275,6 @@ def set_room_details_carpet_color(room_id):
     curr.execute(query, data)
     conn.commit()
     curr.close()
-    return {'room_id': room_id}
+    response = {'room_id': room_id}
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
