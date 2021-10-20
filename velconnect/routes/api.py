@@ -246,7 +246,7 @@ def set_room_details_carpet_color(room_id):
     conn, curr = connectToDB()
     query = """
     UPDATE `Room`
-    SET `tv_url` = %(tv_url)s,
+    SET `carpet_color` = %(carpet_color)s,
     `last_modified` = CURRENT_TIMESTAMP
     WHERE `room_id` = %(room_id)s;
     """
