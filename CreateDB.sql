@@ -9,7 +9,7 @@ CREATE TABLE `Room` (
     `whitelist` JSON,
     CHECK (JSON_VALID(`whitelist`)),
     `tv_url` VARCHAR(1024),
-    `carpet_color` VARCHAR(8),
+    `carpet_color` VARCHAR(9),
     `room_details` JSON,
     CHECK (JSON_VALID(`room_details`))
 );
@@ -25,7 +25,7 @@ CREATE TABLE `Headset` (
     `date_created` TIMESTAMP DEFAULT CURRENT_TIME,
     -- the last time this headset was actually seen
     `last_used` TIMESTAMP DEFAULT CURRENT_TIME,
-    `user_color` VARCHAR(8),
+    `user_color` VARCHAR(9),
     `user_name` VARCHAR(64),
     -- Stuff like player color, nickname, whiteboard state
     `user_details` JSON,
