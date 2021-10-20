@@ -78,7 +78,7 @@
                 console.log(resp);
                 let respData = JSON.parse(resp);
                 if (respData['hw_id'] != '') {
-                    document.cookie = "hw_id=" + respData['hw_id'] + "; SameSite=None; Secure";
+                    setCookie('hw_id', respData['hw_id'], 60);
                     window.location.href = "/";
                 }
             }, (status) => {
