@@ -74,7 +74,7 @@
         let submit_button = document.getElementById('submit_pairing_code');
         let pair_code_input = document.getElementById('pair_code');
         submit_button.addEventListener('click', () => {
-            httpGetAsync('http://3.141.15.55/api/pair_headset/' + pair_code_input.value, (resp) => {
+            httpGetAsync('https://sparkling-dream-4e86.vel.workers.dev/api/pair_headset/' + pair_code_input.value, (resp) => {
                 console.log(resp);
                 let respData = JSON.parse(resp);
                 if (respData['hw_id'] != '') {

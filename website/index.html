@@ -144,7 +144,7 @@
         loading.style.display = "none";
         if (hw_id != "") {
 
-            httpGetAsync('http://3.141.15.55/api/get_state/' + hw_id, (resp) => {
+            httpGetAsync('https://sparkling-dream-4e86.vel.workers.dev/api/get_state/' + hw_id, (resp) => {
                 console.log(resp);
                 let respData = JSON.parse(resp);
 
@@ -165,14 +165,14 @@
             });
 
             function setUserData(endpoint, data) {
-                httpPostAsync('http://3.141.15.55/api/set_headset_details/' + hw_id + '/' + endpoint,
+                httpPostAsync('https://sparkling-dream-4e86.vel.workers.dev/api/set_headset_details/' + hw_id + '/' + endpoint,
                     data,
                     (resp) => {console.log('success');},
                     (status) => {console.log('fail');}
                 );
             }
             function setRoomData(endpoint, data) {
-                httpPostAsync('http://3.141.15.55/api/set_room_details/' + current_room.value + '/' + endpoint,
+                httpPostAsync('https://sparkling-dream-4e86.vel.workers.dev/api/set_room_details/' + current_room.value + '/' + endpoint,
                     data,
                     (resp) => {console.log('success');},
                     (status) => {console.log('fail');}
