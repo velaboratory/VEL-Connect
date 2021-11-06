@@ -64,14 +64,14 @@
                     <br>
                     <div class="tile tile-centered">
                         <div class="tile-content">
-                            <div class="tile-title text-bold">First Added</div>
+                            <div class="tile-title text-bold">First Seen</div>
                             <div class="tile-subtitle date_created">---</div>
                         </div>
                     </div>
                     <br>
                     <div class="tile tile-centered">
                         <div class="tile-content">
-                            <div class="tile-title text-bold">Last Used</div>
+                            <div class="tile-title text-bold">Last Login</div>
                             <div class="tile-subtitle last_used">---</div>
                         </div>
                     </div>
@@ -144,14 +144,14 @@
         loading.style.display = "none";
         if (hw_id != "") {
 
-            httpGetAsync('https://sparkling-dream-4e86.vel.workers.dev/api/get_state/' + hw_id, (resp) => {
+            httpGetAsync('https://connect.vel.workers.dev/api/get_state/' + hw_id, (resp) => {
                 console.log(resp);
                 let respData = JSON.parse(resp);
 
                 writeClass('hw_id', respData['user']['hw_id']);
                 writeValue('current_room', respData['user']['current_room']);
-                writeClass('date_created', respData['user']['date_created']);
-                writeClass('last_used', respData['user']['last_used']);
+                writeClass('date_created', respData['user']['date_created'] + "<br>" + timeSinceString(respData['user']['date_created']) + " ago");
+                writeClass('last_used', respData['user']['last_used'] + "<br>" + timeSinceString(respData['user']['last_used']) + " ago");
                 writeValue('user_color', respData['user']['user_color']);
                 writeValue('user_name', respData['user']['user_name']);
                 if (respData['room']) {
@@ -165,14 +165,14 @@
             });
 
             function setUserData(endpoint, data) {
-                httpPostAsync('https://sparkling-dream-4e86.vel.workers.dev/api/set_headset_details/' + hw_id + '/' + endpoint,
+                httpPostAsync('https://connect.vel.workers.dev/api/set_headset_details/' + hw_id + '/' + endpoint,
                     data,
                     (resp) => {console.log('success');},
                     (status) => {console.log('fail');}
                 );
             }
             function setRoomData(endpoint, data) {
-                httpPostAsync('https://sparkling-dream-4e86.vel.workers.dev/api/set_room_details/' + current_room.value + '/' + endpoint,
+                httpPostAsync('https://connect.vel.workers.dev/api/set_room_details/' + current_room.value + '/' + endpoint,
                     data,
                     (resp) => {console.log('success');},
                     (status) => {console.log('fail');}

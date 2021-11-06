@@ -7,7 +7,7 @@
     },
     "servers": [
         {
-            "url": "http://3.141.15.55/api/"
+            "url": "https://connect.vel.workers.dev/api/"
         }
     ],
     "tags": [

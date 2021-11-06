@@ -215,6 +215,7 @@ def set_room_details(room_id):
 
 
 def set_room_details_db(room_id, data):
+    # TODO
     conn, curr = connectToDB()
     query = """
     INSERT INTO `Room` VALUES(

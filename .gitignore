@@ -4,3 +4,5 @@ __pycache__/
 gunicorn.err.log
 gunicorn.log
 config_mysql.py
+hugo.exe
+spectre/
