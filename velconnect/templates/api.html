@@ -3,6 +3,7 @@
     <head>
       <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 charecters -->
       <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+      <title>API Reference</title>
     </head>
     <body>
       <rapi-doc
@@ -10,7 +11,7 @@
         primary-color = "#bc1f2d" 
         show-header = "false" 
         show-info = "true"
-        spec-url = "http://3.141.15.55/api/api_spec.json" 
+        spec-url = "{% include 'api_url.html' %}/api/api_spec.json" 
         default-schema-tab = 'example'
         
         > 
