@@ -3,7 +3,6 @@ from velconnect.auth import require_api_key
 from velconnect.db import connectToDB
 from velconnect.logger import logger
 from flask import Blueprint, request, jsonify, render_template, url_for
-from flask_cors import CORS
 import time
 import simplejson as json
 from random import random
@@ -17,7 +16,6 @@ def index():
 
 
 @bp.route('/api_spec.json', methods=['GET'])
-@cross_origin()
 @require_api_key(0)
 def api_spec():
     response = send_from_directory('static', 'api_spec.json')
