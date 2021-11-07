@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, make_response, request
+from flask_cors import CORS
 from velconnect.auth import limiter
 from velconnect.logger import logger
 from time import strftime
@@ -7,10 +8,12 @@ import traceback
 
 def create_app():
     app = Flask(
-        __name__, 
-        instance_relative_config=False, 
+        __name__,
+        instance_relative_config=False,
     )
     app.config.from_pyfile('config.py')
+
+    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     limiter.init_app(app)
 

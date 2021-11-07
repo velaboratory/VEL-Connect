@@ -3,6 +3,7 @@ from velconnect.auth import require_api_key
 from velconnect.db import connectToDB
 from velconnect.logger import logger
 from flask import Blueprint, request, jsonify, render_template, url_for
+from flask_cors import CORS
 import time
 import simplejson as json
 from random import random
@@ -16,6 +17,7 @@ def index():
 
 
 @bp.route('/api_spec.json', methods=['GET'])
+@cross_origin()
 @require_api_key(0)
 def api_spec():
     response = send_from_directory('static', 'api_spec.json')
@@ -144,6 +146,44 @@ def set_headset_details_db(hw_id, data):
     response = jsonify({'success': True})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+
+
+@bp.route('/set_headset_details/<hw_id>/json', methods=['POST'])
+@require_api_key(10)
+def set_headset_details_json(hw_id):
+    data = request.json
+    logger.error(data)
+    conn, curr = connectToDB()
+    query = """
+    UPDATE `Headset`
+    SET `user_details` = %(json)s
+    WHERE `hw_id` = %(hw_id)s;
+    """
+    curr.execute(query, {'hw_id': hw_id, 'json': data})
+    conn.commit()
+    curr.close()
+
+    return jsonify({'success': True})
+
+
+    
+@bp.route('/set_room_details/<room_id>/json', methods=['POST'])
+@require_api_key(10)
+def set_room_details_json(room_id):
+    data = request.json
+    logger.error(data)
+    conn, curr = connectToDB()
+    query = """
+    UPDATE `Room`
+    SET `room_details` = %(json)s
+    WHERE `room_id` = %(room_id)s;
+    """
+    curr.execute(query, {'room_id': room_id, 'json': data})
+    conn.commit()
+    curr.close()
+
+    return jsonify({'success': True})
+
 
 
 @bp.route('/set_headset_details/<hw_id>/user_name', methods=['POST'])
