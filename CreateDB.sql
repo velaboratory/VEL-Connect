@@ -27,6 +27,7 @@ CREATE TABLE `Headset` (
     `last_used` TIMESTAMP DEFAULT CURRENT_TIME,
     `user_color` VARCHAR(9),
     `user_name` VARCHAR(64),
+    `avatar_url` VARCHAR(128),
     -- Stuff like player color, nickname, whiteboard state
     `user_details` JSON,
     CHECK (JSON_VALID(`user_details`))

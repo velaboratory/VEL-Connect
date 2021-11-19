@@ -32,10 +32,16 @@
 
 <div id="headset_details" style="display: none;">
     <div class="panel card">
+        <div class="card-image">
+            <img class="img-responsive" src="/static/img/mini_landscape.png" alt="conVRged Logo">
+        </div>
         <div class="panel-header text-center">
-            <figure class="avatar avatar-lg"><img src="/static/favicons/android-chrome-192x192.png" alt="Avatar"></figure>
+            <!-- <img src="/static/favicons/android-chrome-192x192.png" alt="Avatar" style="height:5em;" /> -->
             <div class="panel-title h5 mt-10">Headset Info</div>
-            <div class="panel-subtitle hw_id">---</div>
+            <code class="panel-subtitle hw_id">---</code>
+            <br>
+            <br>
+            <a href="/pair"><button class="btn btn-primary btn-lg tooltip tooltip-bottom" data-tooltip="Enter a new pairing code">Pair New</button></a>
         </div>
         <div class="panel-body">
             <div class="tile tile-centered">
@@ -63,6 +69,9 @@
                 </div>
             </div>
             <br>
+
+            <div class="divider text-center" data-content="User Settings"></div>
+
             <div class="tile tile-centered">
                 <div class="tile-content">
                     <div class="tile-title text-bold">User Name</div>
@@ -70,18 +79,19 @@
                 </div>
                 <div class="tile-action">
                     <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_user_name"
-                        data-tooltip="">Set</button>
+                        data-tooltip="Update in VR">Set</button>
                 </div>
             </div>
             <br>
             <div class="tile tile-centered">
                 <div class="tile-content">
-                    <div class="tile-title text-bold">TV URL</div>
-                    <input class="btn tv_url" type="text" id="tv_url" placeholder="----">
+                    <div class="tile-title text-bold">Avatar URL</div>
+                    <div class="tile-subtitle"><a href="https://vr.readyplayer.me" target="blank">Create New Avatar</a></div>
+                    <input class="btn avatar_url" type="text" id="avatar_url" placeholder="----">
                 </div>
                 <div class="tile-action">
-                    <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_tv_url"
-                        data-tooltip="">Set</button>
+                    <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_avatar_url"
+                        data-tooltip="Update in VR">Set</button>
                 </div>
             </div>
             <br>
@@ -93,6 +103,20 @@
                 <div class="tile-action">
                     <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_user_color"
                         data-tooltip="Set User Color">Set</button>
+                </div>
+            </div>
+            <br>
+
+            <div class="divider text-center" data-content="Room Settings"></div>
+
+            <div class="tile tile-centered">
+                <div class="tile-content">
+                    <div class="tile-title text-bold">TV URL</div>
+                    <input class="btn tv_url" type="text" id="tv_url" placeholder="----">
+                </div>
+                <div class="tile-action">
+                    <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_tv_url"
+                        data-tooltip="Update in VR">Set</button>
                 </div>
             </div>
             <br>
@@ -122,8 +146,10 @@
     let headset_details = document.getElementById('headset_details');
     let hw_id_field = document.getElementById('hw_id');
     let failure = document.getElementById('failure');
-    let set_room_id = document.getElementById('set_room_id');
     let current_room = document.getElementById('current_room');
+    let set_room_id = document.getElementById('set_room_id');
+    let user_color = document.getElementById('user_color');
+    let carpet_color = document.getElementById('carpet_color');
 
 
     // check cookie
@@ -139,11 +165,33 @@
             writeClass('date_created', respData['user']['date_created'] + "<br>" + timeSinceString(respData['user']['date_created']) + " ago");
             writeClass('last_used', respData['user']['last_used'] + "<br>" + timeSinceString(respData['user']['last_used']) + " ago");
             writeValue('user_color', respData['user']['user_color']);
+            user_color.parentElement.style.color = respData['user']['user_color'];
             writeValue('user_name', respData['user']['user_name']);
+            writeValue('avatar_url', respData['user']['avatar_url']);
             if (respData['room']) {
                 writeValue('tv_url', respData['room']['tv_url']);
                 writeValue('carpet_color', respData['room']['carpet_color']);
+                carpet_color.parentElement.style.color = respData['room']['carpet_color'];
             }
+
+
+
+            Coloris({
+                el: '.coloris',
+                swatches: [
+                    '#264653',
+                    '#2a9d8f',
+                    '#e9c46a',
+                    '#f4a261',
+                    '#e76f51',
+                    '#d62828',
+                    '#023e8a',
+                    '#0077b6',
+                    '#0096c7',
+                    '#00b4d8',
+                    '#48cae4',
+                ]
+            });
 
             loading.style.display = "none";
             headset_details.style.display = "block";
@@ -182,13 +230,13 @@
         document.getElementById('set_carpet_color').addEventListener('click', () => {
             setRoomData('carpet_color', { "carpet_color": document.getElementById('carpet_color').value });
         });
+        document.getElementById('set_avatar_url').addEventListener('click', () => {
+            setUserData('avatar_url', { "avatar_url": document.getElementById('avatar_url').value });
+        });
 
     } else {
         window.location.href = "/pair";
     }
-
-
-
 
 
 
@@ -208,7 +256,6 @@
             '#48cae4',
         ]
     });
-
 
 </script>
 {% endblock %}

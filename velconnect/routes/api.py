@@ -164,7 +164,6 @@ def set_headset_details_json(hw_id):
     return jsonify({'success': True})
 
 
-    
 @bp.route('/set_room_details/<room_id>/json', methods=['POST'])
 @require_api_key(10)
 def set_room_details_json(room_id):
@@ -181,7 +180,6 @@ def set_room_details_json(room_id):
     curr.close()
 
     return jsonify({'success': True})
-
 
 
 @bp.route('/set_headset_details/<hw_id>/user_name', methods=['POST'])
@@ -210,6 +208,25 @@ def set_headset_details_user_color(hw_id):
     query = """
     UPDATE `Headset`
     SET `user_color` = %(user_color)s
+    WHERE `hw_id` = %(hw_id)s;
+    """
+    data = request.json
+    data['hw_id'] = hw_id
+    curr.execute(query, data)
+    conn.commit()
+    curr.close()
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
+@bp.route('/set_headset_details/<hw_id>/avatar_url', methods=['POST'])
+@require_api_key(10)
+def set_headset_details_avatar_url(hw_id):
+    conn, curr = connectToDB()
+    query = """
+    UPDATE `Headset`
+    SET `avatar_url` = %(avatar_url)s
     WHERE `hw_id` = %(hw_id)s;
     """
     data = request.json
