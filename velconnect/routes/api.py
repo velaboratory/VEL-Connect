@@ -33,7 +33,9 @@ def get_all_headsets():
     curr.execute(query, None)
     values = [dict(row) for row in curr.fetchall()]
     curr.close()
-    return jsonify(values)
+    response = jsonify(values)
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 @bp.route('/pair_headset/<pairing_code>', methods=['GET'])

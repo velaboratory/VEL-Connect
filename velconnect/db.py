@@ -13,7 +13,8 @@ def connectToDB():
         password=MYSQL_DATABASE_PASSWORD,
         db=MYSQL_DATABASE_DB,
         cursorclass=pymysql.cursors.DictCursor,
-        conv=conv
+        conv=conv,
+        ssl={"fake_flag_to_enable_tls":True},
     )
     curr = conn.cursor()
 
