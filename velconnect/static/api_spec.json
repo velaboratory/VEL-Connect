@@ -7,7 +7,10 @@
     },
     "servers": [
         {
-            "url": "https://connect.vel.workers.dev/api/"
+            "url": "http://velconnect.ugavel.com/api/"
+        },
+        {
+            "url": "http://localhost:5000/api/"
         }
     ],
     "tags": [
@@ -107,6 +110,34 @@
               "in": "path",
               "description": "Room id",
               "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      },
+      "/update_user_count": {
+        "post": {
+          "summary": "Update User Count",
+          "description" : "Updates the current user count for a room and globally.",
+          "tags": ["User Count"],
+          "parameters": [
+          ]
+        }
+      },
+      "/get_user_count": {
+        "get": {
+          "summary": "Get User Count",
+          "description" : "Gets a list of the recent user counts.",
+          "tags": ["User Count"],
+          "parameters": [
+            {
+              "name": "hours",
+              "example": "24",
+              "in": "path",
+              "description": "Number of hours to get user counts for",
+              "required": false,
               "schema": {
                 "type": "string"
               }

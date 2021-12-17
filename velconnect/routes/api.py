@@ -122,6 +122,80 @@ def get_headset_details_db(hw_id):
     return {'user': headsets[0], 'room': room}
 
 
+
+
+@bp.route('/set_headset_details/<hw_id>', methods=['POST'])
+@require_api_key(10)
+def set_headset_details_generic(hw_id):
+    data = request.json
+    logger.error(data)
+    conn, curr = connectToDB()
+
+    try:
+        for key in data:
+            # protected keys
+            if key == 'hw_id' \
+                or key == 'owned_room' \
+                or key == 'date_created' \
+                or key == 'last_used' \
+                    :
+                continue
+
+            if key == 'current_room':
+                create_room(data['current_room'])
+            query = """
+            UPDATE `Headset` SET `%(key)s`=%(value)s WHERE `hw_id`=%(hw_id)s;
+            """
+            curr.execute(query, {'key': key, 'value': data[key], 'hw_id': hw_id})
+            conn.commit()
+    except Exception as e:
+        curr.close()
+        logger.error(e)
+        return 'Error', 400
+    
+    curr.close()
+
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
+    
+
+@bp.route('/set_room_details/<room_id>', methods=['POST'])
+@require_api_key(10)
+def set_room_details_generic(room_id):
+    data = request.json
+    logger.error(data)
+    conn, curr = connectToDB()
+
+    try:
+        for key in data:
+            # protected keys
+            if key == 'room_id' \
+                or key == 'date_created' \
+                or key == 'last_modified' \
+                or key == 'owner' \
+                    :
+                continue
+
+            query = """
+            UPDATE `Room` SET `%(key)s`=%(value)s WHERE `room_id`=%(room_id)s;
+            """
+            curr.execute(query, {'key': key, 'value': data[key], 'room_id': room_id})
+            conn.commit()
+    except Exception as e:
+        curr.close()
+        logger.error(e)
+        return 'Error', 400
+    
+    curr.close()
+
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
 @bp.route('/set_headset_details/<hw_id>/current_room', methods=['POST'])
 @require_api_key(10)
 def set_headset_details(hw_id):
@@ -335,5 +409,50 @@ def set_room_details_carpet_color(room_id):
     conn.commit()
     curr.close()
     response = jsonify({'room_id': room_id})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
+
+
+@bp.route('/update_user_count', methods=['POST'])
+@require_api_key(10)
+def update_user_count():
+    conn, curr = connectToDB()
+    query = """
+    INSERT INTO `UserCount`
+    VALUES(
+        CURRENT_TIMESTAMP,
+        %(hw_id)s,
+        %(room_id)s,
+        %(total_users)s,
+        %(room_users)s
+    );
+    """
+    data = request.json
+    curr.execute(query, data)
+    conn.commit()
+    curr.close()
+    response = jsonify({'success': True})
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
+
+
+@bp.route('/get_user_count', methods=['GET'])
+def get_user_count():
+    hours = request.args.get('hours', 24)
+    conn, curr = connectToDB()
+    query = """
+    SELECT timestamp, total_users 
+    FROM `UserCount`
+    WHERE TIMESTAMP > DATE_SUB(NOW(), INTERVAL """ + str(hours) + """ HOUR);
+    """
+    data = request.json
+    curr.execute(query, data)
+    values = [dict(row) for row in curr.fetchall()]
+    curr.close()
+    response = jsonify(values)
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response

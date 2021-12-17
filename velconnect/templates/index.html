@@ -198,17 +198,18 @@
         }, (status) => {
             loading.style.display = "none";
             failure.style.display = "block";
+            window.location.href = "/pair";
         });
 
-        function setUserData(endpoint, data) {
-            httpPostAsync('{% include "api_url.html" %}/api/set_headset_details/' + hw_id + '/' + endpoint,
+        function setUserData(data) {
+            httpPostAsync('{% include "api_url.html" %}/api/set_headset_details/' + hw_id,
                 data,
                 (resp) => { console.log('success'); },
                 (status) => { console.log('fail'); }
             );
         }
-        function setRoomData(endpoint, data) {
-            httpPostAsync('{% include "api_url.html" %}/api/set_room_details/' + current_room.value + '/' + endpoint,
+        function setRoomData(data) {
+            httpPostAsync('{% include "api_url.html" %}/api/set_room_details/' + current_room.value,
                 data,
                 (resp) => { console.log('success'); },
                 (status) => { console.log('fail'); }
@@ -216,22 +217,22 @@
         }
 
         set_room_id.addEventListener('click', () => {
-            setUserData('current_room', { "current_room": current_room.value });
+            setUserData({ "current_room": current_room.value });
         });
         document.getElementById('set_user_color').addEventListener('click', () => {
-            setUserData('user_color', { "user_color": document.getElementById('user_color').value });
+            setUserData({ "user_color": document.getElementById('user_color').value });
         });
         document.getElementById('set_user_name').addEventListener('click', () => {
-            setUserData('user_name', { "user_name": document.getElementById('user_name').value });
+            setUserData({ "user_name": document.getElementById('user_name').value });
         });
         document.getElementById('set_tv_url').addEventListener('click', () => {
-            setRoomData('tv_url', { "tv_url": document.getElementById('tv_url').value });
+            setRoomData({ "tv_url": document.getElementById('tv_url').value });
         });
         document.getElementById('set_carpet_color').addEventListener('click', () => {
-            setRoomData('carpet_color', { "carpet_color": document.getElementById('carpet_color').value });
+            setRoomData({ "carpet_color": document.getElementById('carpet_color').value });
         });
         document.getElementById('set_avatar_url').addEventListener('click', () => {
-            setUserData('avatar_url', { "avatar_url": document.getElementById('avatar_url').value });
+            setUserData({ "avatar_url": document.getElementById('avatar_url').value });
         });
 
     } else {
