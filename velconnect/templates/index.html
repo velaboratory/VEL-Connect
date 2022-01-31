@@ -86,7 +86,7 @@
             <div class="tile tile-centered">
                 <div class="tile-content">
                     <div class="tile-title text-bold">Avatar URL</div>
-                    <div class="tile-subtitle"><a href="https://vr.readyplayer.me" target="blank">Create New Avatar</a></div>
+                    <div class="tile-subtitle"><a href="https://convrged.readyplayer.me" target="blank">Create New Avatar</a></div>
                     <input class="btn avatar_url" type="text" id="avatar_url" placeholder="----">
                 </div>
                 <div class="tile-action">
@@ -202,6 +202,7 @@
         });
 
         function setUserData(data) {
+            data["sender_id"] = Math.floor(Math.random()*10000000);
             httpPostAsync('{% include "api_url.html" %}/api/set_headset_details/' + hw_id,
                 data,
                 (resp) => { console.log('success'); },
@@ -209,6 +210,7 @@
             );
         }
         function setRoomData(data) {
+            data["sender_id"] = Math.floor(Math.random()*10000000);
             httpPostAsync('{% include "api_url.html" %}/api/set_room_details/' + current_room.value,
                 data,
                 (resp) => { console.log('success'); },

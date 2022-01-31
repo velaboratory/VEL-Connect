@@ -5,7 +5,6 @@ from velconnect.logger import logger
 from time import strftime
 import traceback
 
-
 def create_app():
     app = Flask(
         __name__,

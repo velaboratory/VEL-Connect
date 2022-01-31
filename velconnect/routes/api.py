@@ -122,8 +122,6 @@ def get_headset_details_db(hw_id):
     return {'user': headsets[0], 'room': room}
 
 
-
-
 @bp.route('/set_headset_details/<hw_id>', methods=['POST'])
 @require_api_key(10)
 def set_headset_details_generic(hw_id):
@@ -131,36 +129,34 @@ def set_headset_details_generic(hw_id):
     logger.error(data)
     conn, curr = connectToDB()
 
+    allowed_keys = [
+        'current_room',
+        'pairing_code',
+        'user_color',
+        'user_name',
+        'avatar_url',
+        'user_details',
+    ]
     try:
         for key in data:
-            # protected keys
-            if key == 'hw_id' \
-                or key == 'owned_room' \
-                or key == 'date_created' \
-                or key == 'last_used' \
-                    :
-                continue
-
-            if key == 'current_room':
-                create_room(data['current_room'])
-            query = """
-            UPDATE `Headset` SET `%(key)s`=%(value)s WHERE `hw_id`=%(hw_id)s;
-            """
-            curr.execute(query, {'key': key, 'value': data[key], 'hw_id': hw_id})
-            conn.commit()
+            if key in allowed_keys:
+                if key == 'current_room':
+                    create_room(data['current_room'])
+                query = "UPDATE `Headset` SET " + key + "=%(value)s, modified_by=%(sender_id)s WHERE `hw_id`=%(hw_id)s;"
+                curr.execute(query, {'value': data[key], 'hw_id': hw_id, 'sender_id': data['sender_id']})
+                conn.commit()
     except Exception as e:
+        logger.error(curr._last_executed)
         curr.close()
         logger.error(e)
         return 'Error', 400
-    
+
     curr.close()
 
     response = jsonify({'success': True})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-
-    
 
 @bp.route('/set_room_details/<room_id>', methods=['POST'])
 @require_api_key(10)
@@ -169,26 +165,25 @@ def set_room_details_generic(room_id):
     logger.error(data)
     conn, curr = connectToDB()
 
+    allowed_keys = [
+        'modified_by',
+        'whitelist',
+        'tv_url',
+        'carpet_color',
+        'room_details',
+    ]
     try:
         for key in data:
-            # protected keys
-            if key == 'room_id' \
-                or key == 'date_created' \
-                or key == 'last_modified' \
-                or key == 'owner' \
-                    :
-                continue
-
-            query = """
-            UPDATE `Room` SET `%(key)s`=%(value)s WHERE `room_id`=%(room_id)s;
-            """
-            curr.execute(query, {'key': key, 'value': data[key], 'room_id': room_id})
-            conn.commit()
+            if key in allowed_keys:
+                query = "UPDATE `Room` SET " + key + "=%(value)s, modified_by=%(sender_id)s WHERE `room_id`=%(room_id)s;"
+                curr.execute(query, {'value': data[key], 'room_id': room_id, 'sender_id': data['sender_id']})
+                conn.commit()
     except Exception as e:
+        logger.error(curr._last_executed)
         curr.close()
         logger.error(e)
         return 'Error', 400
-    
+
     curr.close()
 
     response = jsonify({'success': True})
@@ -413,8 +408,6 @@ def set_room_details_carpet_color(room_id):
     return response
 
 
-
-
 @bp.route('/update_user_count', methods=['POST'])
 @require_api_key(10)
 def update_user_count():
@@ -426,7 +419,9 @@ def update_user_count():
         %(hw_id)s,
         %(room_id)s,
         %(total_users)s,
-        %(room_users)s
+        %(room_users)s,
+        %(version)s,
+        %(platform)s
     );
     """
     data = request.json
@@ -436,8 +431,6 @@ def update_user_count():
     response = jsonify({'success': True})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
-
-
 
 
 @bp.route('/get_user_count', methods=['GET'])

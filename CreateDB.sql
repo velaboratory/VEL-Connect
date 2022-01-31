@@ -5,6 +5,8 @@ CREATE TABLE `Room` (
     `last_modified` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     -- Can be null if no owner
     `owner` VARCHAR(64),
+    -- The last source to change this object
+    `modified_by` VARCHAR(64),
     -- array of hw_ids of users allowed. Always includes the owner. Null for public
     `whitelist` JSON,
     CHECK (JSON_VALID(`whitelist`)),
@@ -16,6 +18,8 @@ CREATE TABLE `Room` (
 DROP TABLE IF EXISTS `Headset`;
 CREATE TABLE `Headset` (
     `hw_id` VARCHAR(64) NOT NULL PRIMARY KEY,
+    -- The last source to change this object
+    `modified_by` VARCHAR(64),
     -- The room_id of the owned room
     `owned_room` VARCHAR(64),
     -- The room_id of the current room. Can be null if room not specified
@@ -44,9 +48,12 @@ CREATE TABLE `APIKey` (
 );
 DROP TABLE IF EXISTS `UserCount`;
 CREATE TABLE `UserCount` (
-    `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP PRIMARY KEY,
+    `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `hw_id` VARCHAR(64) NOT NULL,
     `room_id` VARCHAR(64) NOT NULL,
     `total_users` INT NOT NULL DEFAULT 0,
-    `room_users` INT NOT NULL DEFAULT 0
+    `room_users` INT NOT NULL DEFAULT 0,
+    `version` VARCHAR(32) DEFAULT "0",
+    `platform` VARCHAR(64) DEFAULT "none",
+    PRIMARY KEY (`timestamp`, `hw_id`)
 );
