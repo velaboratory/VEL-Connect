@@ -142,8 +142,10 @@ def set_headset_details_generic(hw_id):
             if key in allowed_keys:
                 if key == 'current_room':
                     create_room(data['current_room'])
-                query = "UPDATE `Headset` SET " + key + "=%(value)s, modified_by=%(sender_id)s WHERE `hw_id`=%(hw_id)s;"
-                curr.execute(query, {'value': data[key], 'hw_id': hw_id, 'sender_id': data['sender_id']})
+                query = "UPDATE `Headset` SET " + key + \
+                    "=%(value)s, modified_by=%(sender_id)s WHERE `hw_id`=%(hw_id)s;"
+                curr.execute(
+                    query, {'value': data[key], 'hw_id': hw_id, 'sender_id': data['sender_id']})
                 conn.commit()
     except Exception as e:
         logger.error(curr._last_executed)
@@ -175,8 +177,10 @@ def set_room_details_generic(room_id):
     try:
         for key in data:
             if key in allowed_keys:
-                query = "UPDATE `Room` SET " + key + "=%(value)s, modified_by=%(sender_id)s WHERE `room_id`=%(room_id)s;"
-                curr.execute(query, {'value': data[key], 'room_id': room_id, 'sender_id': data['sender_id']})
+                query = "UPDATE `Room` SET " + key + \
+                    "=%(value)s, modified_by=%(sender_id)s WHERE `room_id`=%(room_id)s;"
+                curr.execute(
+                    query, {'value': data[key], 'room_id': room_id, 'sender_id': data['sender_id']})
                 conn.commit()
     except Exception as e:
         logger.error(curr._last_executed)
@@ -186,125 +190,6 @@ def set_room_details_generic(room_id):
 
     curr.close()
 
-    response = jsonify({'success': True})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
-@bp.route('/set_headset_details/<hw_id>/current_room', methods=['POST'])
-@require_api_key(10)
-def set_headset_details(hw_id):
-    return set_headset_details_db(hw_id, request.json)
-
-
-def set_headset_details_db(hw_id, data):
-    logger.error(data)
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Headset`
-    SET `current_room` = %(current_room)s
-    WHERE `hw_id` = %(hw_id)s;
-    """
-    data['hw_id'] = hw_id
-    curr.execute(query, data)
-    conn.commit()
-    curr.close()
-
-    create_room(data['current_room'])
-
-    response = jsonify({'success': True})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
-@bp.route('/set_headset_details/<hw_id>/json', methods=['POST'])
-@require_api_key(10)
-def set_headset_details_json(hw_id):
-    data = request.json
-    logger.error(data)
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Headset`
-    SET `user_details` = %(json)s
-    WHERE `hw_id` = %(hw_id)s;
-    """
-    curr.execute(query, {'hw_id': hw_id, 'json': data})
-    conn.commit()
-    curr.close()
-
-    return jsonify({'success': True})
-
-
-@bp.route('/set_room_details/<room_id>/json', methods=['POST'])
-@require_api_key(10)
-def set_room_details_json(room_id):
-    data = request.json
-    logger.error(data)
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Room`
-    SET `room_details` = %(json)s
-    WHERE `room_id` = %(room_id)s;
-    """
-    curr.execute(query, {'room_id': room_id, 'json': data})
-    conn.commit()
-    curr.close()
-
-    return jsonify({'success': True})
-
-
-@bp.route('/set_headset_details/<hw_id>/user_name', methods=['POST'])
-@require_api_key(10)
-def set_headset_details_user_name(hw_id):
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Headset`
-    SET `user_name` = %(user_name)s
-    WHERE `hw_id` = %(hw_id)s;
-    """
-    data = request.json
-    data['hw_id'] = hw_id
-    curr.execute(query, data)
-    conn.commit()
-    curr.close()
-    response = jsonify({'success': True})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
-@bp.route('/set_headset_details/<hw_id>/user_color', methods=['POST'])
-@require_api_key(10)
-def set_headset_details_user_color(hw_id):
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Headset`
-    SET `user_color` = %(user_color)s
-    WHERE `hw_id` = %(hw_id)s;
-    """
-    data = request.json
-    data['hw_id'] = hw_id
-    curr.execute(query, data)
-    conn.commit()
-    curr.close()
-    response = jsonify({'success': True})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
-@bp.route('/set_headset_details/<hw_id>/avatar_url', methods=['POST'])
-@require_api_key(10)
-def set_headset_details_avatar_url(hw_id):
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Headset`
-    SET `avatar_url` = %(avatar_url)s
-    WHERE `hw_id` = %(hw_id)s;
-    """
-    data = request.json
-    data['hw_id'] = hw_id
-    curr.execute(query, data)
-    conn.commit()
-    curr.close()
     response = jsonify({'success': True})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
@@ -332,28 +217,6 @@ def get_room_details_db(room_id):
         return None
 
 
-@bp.route('/set_room_details/<room_id>', methods=['POST'])
-@require_api_key(10)
-def set_room_details(room_id):
-    response = jsonify(set_room_details_db(room_id, request.json))
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
-def set_room_details_db(room_id, data):
-    # TODO
-    conn, curr = connectToDB()
-    query = """
-    INSERT INTO `Room` VALUES(
-        %(room_id)s
-    );
-    """
-    curr.execute(query, {'room_id': room_id})
-    conn.commit()
-    curr.close()
-    return {'room_id': room_id}
-
-
 def create_room(room_id):
     conn, curr = connectToDB()
     query = """
@@ -366,46 +229,6 @@ def create_room(room_id):
     conn.commit()
     curr.close()
     return {'room_id': room_id}
-
-
-@bp.route('/set_room_details/<room_id>/tv_url', methods=['POST'])
-@require_api_key(10)
-def set_room_details_tv_url(room_id):
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Room`
-    SET `tv_url` = %(tv_url)s,
-    `last_modified` = CURRENT_TIMESTAMP
-    WHERE `room_id` = %(room_id)s;
-    """
-    data = request.json
-    data['room_id'] = room_id
-    curr.execute(query, data)
-    conn.commit()
-    curr.close()
-    response = jsonify({'room_id': room_id})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
-@bp.route('/set_room_details/<room_id>/carpet_color', methods=['POST'])
-@require_api_key(10)
-def set_room_details_carpet_color(room_id):
-    conn, curr = connectToDB()
-    query = """
-    UPDATE `Room`
-    SET `carpet_color` = %(carpet_color)s,
-    `last_modified` = CURRENT_TIMESTAMP
-    WHERE `room_id` = %(room_id)s;
-    """
-    data = request.json
-    data['room_id'] = room_id
-    curr.execute(query, data)
-    conn.commit()
-    curr.close()
-    response = jsonify({'room_id': room_id})
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
 
 
 @bp.route('/update_user_count', methods=['POST'])
