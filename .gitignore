@@ -6,3 +6,4 @@ gunicorn.log
 config_mysql.py
 hugo.exe
 spectre/
+velconnect_backup.sql
