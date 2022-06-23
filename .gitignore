@@ -7,3 +7,5 @@ config_mysql.py
 hugo.exe
 spectre/
 velconnect_backup.sql
+discord_bot/graph.png
+discord_bot/config.py

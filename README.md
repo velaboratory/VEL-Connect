@@ -4,11 +4,13 @@
 2. Create pip env: `python3 -m venv env`
 3. Activate the env `. env/bin/activate`
 4. Install packages `pip install -r requirements.txt`
-5. Run `./run_server.sh`
+5. Add `config_mysql.py`
+    - Get from some old server
+6. Run `./run_server.sh`
     - Or set up systemctl service:
         ```ini
         [Unit]
-        Description=VelNet Logging
+        Description=VELConnect API
         Requires=network.target
         After=network.target
 
@@ -22,5 +24,5 @@
         WantedBy=multi-user.target
         ```
     - Enter the above in `/etc/systemd/system/velconnect.service`
-    - `sudo systemctl enable velconnect.service`
-    - `sudo systemctl start velconnect.service`
+    - `sudo systemctl enable velconnect`
+    - `sudo systemctl start velconnect`

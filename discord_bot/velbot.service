@@ -1,0 +1,11 @@
+[Unit]
+Description=VEL Connect Discord Bot
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/home/ubuntu/VEL-Connect/discord_bot/env/bin/python /home/ubuntu/VEL-Connect/discord_bot/discord_bot.py
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
