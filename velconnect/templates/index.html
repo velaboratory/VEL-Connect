@@ -54,6 +54,9 @@
                             alt="Avatar"></figure>
                     <div class="panel-title h5 mt-10">Headset Info</div>
                     <div class="panel-subtitle hw_id">---</div>
+                    <br>
+                    <div class="panel-title h5 mt-10">Pairing Code:</div>
+                    <div class="panel-subtitle pairing_code">---</div>
                 </div>
                 <div class="panel-body">
                     <div class="tile tile-centered">
@@ -157,6 +160,7 @@
                     }
 
                     writeClass('hw_id', respData['user']['hw_id']);
+                    writeClass('pairing_code', respData['user']['pairing_code']);
                     writeValue('current_room', respData['user']['current_room']);
                     writeClass('date_created', respData['user']['date_created'] + "<br>" + timeSinceString(respData['user']['date_created']) + " ago");
                     writeClass('last_used', respData['user']['last_used'] + "<br>" + timeSinceString(respData['user']['last_used']) + " ago");
