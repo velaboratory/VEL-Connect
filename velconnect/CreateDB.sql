@@ -9,11 +9,9 @@ CREATE TABLE `Room` (
     `modified_by` VARCHAR(64),
     -- array of hw_ids of users allowed. Always includes the owner. Null for public
     `whitelist` JSON,
-    CHECK (JSON_VALID(`whitelist`)),
     `tv_url` VARCHAR(1024),
     `carpet_color` VARCHAR(9),
-    `room_details` JSON,
-    CHECK (JSON_VALID(`room_details`))
+    `room_details` JSON
 );
 DROP TABLE IF EXISTS `Headset`;
 CREATE TABLE `Headset` (
@@ -35,8 +33,7 @@ CREATE TABLE `Headset` (
     -- Stuff like player color, nickname, whiteboard state
     `user_details` JSON,
     `streamer_stream_id` VARCHAR(64),
-    `streamer_control_id` VARCHAR(64),
-    CHECK (JSON_VALID(`user_details`))
+    `streamer_control_id` VARCHAR(64)
 );
 DROP TABLE IF EXISTS `APIKey`;
 CREATE TABLE `APIKey` (

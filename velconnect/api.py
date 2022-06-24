@@ -26,7 +26,7 @@ oauth2_scheme = OAuth2PasswordBearer(
 def api_key_auth(api_key: str = Depends(oauth2_scheme)):
     return True
     values = query(
-        "SELECT * FROM `APIKey` WHERE `key`=%(key)s;", {'key': api_key})
+        "SELECT * FROM `APIKey` WHERE `key`=:key;", {'key': api_key})
     if not (len(values) > 0 and values['auth_level'] < 0):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -71,7 +71,7 @@ def get_all_headsets():
 
 @router.get('/pair_headset/{pairing_code}')
 def pair_headset(pairing_code: str):
-    values = query("SELECT * FROM `Headset` WHERE `pairing_code`=%(pairing_code)s;",
+    values = query("SELECT * FROM `Headset` WHERE `pairing_code`=:pairing_code;",
                    {'pairing_code': pairing_code})
     if len(values) == 1:
         print(values[0]['hw_id'])
@@ -81,34 +81,31 @@ def pair_headset(pairing_code: str):
 
 class UpdatePairingCode(BaseModel):
     hw_id: str
-    pairing_code: str
+    pairing_code: int
 
 
 @router.post('/update_pairing_code')
-def update_paring_code(data: UpdatePairingCode):
+def update_pairing_code(data: UpdatePairingCode):
     """This also creates a headset if it doesn't exist"""
 
-    if 'hw_id' not in data:
-        return 'Must supply hw_id', 400
-    if 'pairing_code' not in data:
-        return 'Must supply pairing_code', 400
+    print("Update pairing code")
+    print(data)
+
+    create_headset(data.hw_id)
 
     insert("""
-    INSERT INTO `Headset`(
-        `hw_id`,
-        `pairing_code`,
-        `last_used`
-    ) VALUES (
-        %(hw_id)s,
-        %(pairing_code)s,
-        CURRENT_TIMESTAMP
-    ) 
-    ON DUPLICATE KEY UPDATE 
-        pairing_code=%(pairing_code)s,
-        last_used=CURRENT_TIMESTAMP;
-    """, data)
+    UPDATE `Headset` 
+    SET `pairing_code`=:pairing_code, `last_used`=CURRENT_TIMESTAMP 
+    WHERE `hw_id`=:hw_id;
+    """, data.dict())
 
     return {'success': True}
+
+
+def create_headset(hw_id: str):
+    insert("""
+    INSERT OR IGNORE INTO Headset(hw_id) VALUES (:hw_id);
+    """, {'hw_id': hw_id})
 
 
 @router.get('/get_state/{hw_id}')
@@ -122,7 +119,7 @@ def get_headset_details(hw_id: str):
 
 def get_headset_details_db(hw_id):
     headsets = query("""
-    SELECT * FROM `Headset` WHERE `hw_id`=%(hw_id)s;
+    SELECT * FROM `Headset` WHERE `hw_id`=:hw_id;
     """, {'hw_id': hw_id})
     if len(headsets) == 0:
         return None
@@ -134,7 +131,10 @@ def get_headset_details_db(hw_id):
 
 @router.post('/set_headset_details/{hw_id}')
 def set_headset_details_generic(hw_id: str, data: dict):
+    print("Data:")
     print(data)
+
+    # create_headset(hw_id)
 
     allowed_keys = [
         'current_room',
@@ -143,13 +143,15 @@ def set_headset_details_generic(hw_id: str, data: dict):
         'user_name',
         'avatar_url',
         'user_details',
+        'streamer_stream_id',
+        'streamer_control_id',
     ]
     for key in data:
         if key in allowed_keys:
             if key == 'current_room':
                 create_room(data['current_room'])
-            insert("UPDATE `Headset` SET " + key +
-                   "=%(value)s, modified_by=%(sender_id)s WHERE `hw_id`=%(hw_id)s;", {'value': data[key], 'hw_id': hw_id, 'sender_id': data['sender_id']})
+            insert(f"UPDATE `Headset` SET {key}=:value, modified_by=:sender_id WHERE `hw_id`=:hw_id;", {
+                   'value': data[key], 'hw_id': hw_id, 'sender_id': data['sender_id']})
     return {'success': True}
 
 
@@ -167,7 +169,7 @@ def set_room_details_generic(room_id: str, data: dict):
     for key in data:
         if key in allowed_keys:
             insert("UPDATE `Room` SET " + key +
-                   "=%(value)s, modified_by=%(sender_id)s WHERE `room_id`=%(room_id)s;", {'value': data[key], 'room_id': room_id, 'sender_id': data['sender_id']})
+                   "=:value, modified_by=:sender_id WHERE `room_id`=:room_id;", {'value': data[key], 'room_id': room_id, 'sender_id': data['sender_id']})
     return {'success': True}
 
 
@@ -178,7 +180,7 @@ def get_room_details(room_id: str):
 
 def get_room_details_db(room_id):
     values = query("""
-    SELECT * FROM `Room` WHERE room_id=%(room_id)s;
+    SELECT * FROM `Room` WHERE room_id=:room_id;
     """, {'room_id': room_id})
     if len(values) == 1:
         return values[0]
@@ -188,9 +190,9 @@ def get_room_details_db(room_id):
 
 def create_room(room_id):
     insert("""
-    INSERT IGNORE INTO `Room`(room_id) 
+    INSERT OR IGNORE INTO `Room`(room_id) 
     VALUES(
-        %(room_id)s
+        :room_id
     );
     """, {'room_id': room_id})
     return {'room_id': room_id}
@@ -202,12 +204,12 @@ def update_user_count(data: dict):
     REPLACE INTO `UserCount`
     VALUES(
         CURRENT_TIMESTAMP,
-        %(hw_id)s,
-        %(room_id)s,
-        %(total_users)s,
-        %(room_users)s,
-        %(version)s,
-        %(platform)s
+        :hw_id,
+        :room_id,
+        :total_users,
+        :room_users,
+        :version,
+        :platform
     );
     """, data)
     return {'success': True}
