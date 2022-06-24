@@ -2,3 +2,5 @@ fastapi
 autopep8
 uvicorn
 pymysql
+pyppeteer
+jinja2

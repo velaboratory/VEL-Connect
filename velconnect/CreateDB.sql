@@ -34,6 +34,8 @@ CREATE TABLE `Headset` (
     `avatar_url` VARCHAR(128),
     -- Stuff like player color, nickname, whiteboard state
     `user_details` JSON,
+    `streamer_stream_id` VARCHAR(64),
+    `streamer_control_id` VARCHAR(64),
     CHECK (JSON_VALID(`user_details`))
 );
 DROP TABLE IF EXISTS `APIKey`;
