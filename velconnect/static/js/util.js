@@ -98,7 +98,6 @@ function writeSrc(className, data) {
 }
 
 function timeSince(date) {
-
     let seconds = Math.floor((new Date() - date) / 1000);
 
     let interval = seconds / 31536000;
@@ -127,7 +126,7 @@ function timeSince(date) {
 
 function timeSinceString(date) {
 
-    date = Date.parse(date);
+    date = Date.parse(date + "Z");
     let seconds = Math.floor((new Date() - date) / 1000);
 
     let interval = seconds / 31536000;

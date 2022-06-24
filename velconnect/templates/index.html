@@ -152,6 +152,10 @@
                     console.log(resp);
                     let respData = JSON.parse(resp);
 
+                    if ("error" in respData) {
+                        window.location.href = "/pair";
+                    }
+
                     writeClass('hw_id', respData['user']['hw_id']);
                     writeValue('current_room', respData['user']['current_room']);
                     writeClass('date_created', respData['user']['date_created'] + "<br>" + timeSinceString(respData['user']['date_created']) + " ago");
