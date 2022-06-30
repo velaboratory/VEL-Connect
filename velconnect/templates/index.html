@@ -35,211 +35,324 @@
         .centered {
             margin: auto;
         }
+
+        hr {
+            color: #0004;
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
+<div class="container">
 
-        <div id="loading"><br><br>
-            <div class="loading loading-lg"></div>
-        </div>
-        <div id="failure" style="display: none;"><br><br><br>☹️</div>
+    <div id="loading"><br><br>
+        <div class="loading loading-lg"></div>
+    </div>
+    <div id="failure" style="display: none;"><br><br><br>☹️</div>
 
 
-        <div id="headset_details" style="display: none;">
-            <div class="panel card">
-                <div class="panel-header text-center">
-                    <figure class="avatar avatar-lg"><img src="/static/favicons/android-chrome-192x192.png"
-                            alt="Avatar"></figure>
-                    <div class="panel-title h5 mt-10">Headset Info</div>
-                    <div class="panel-subtitle hw_id">---</div>
-                    <br>
-                    <div class="panel-title h5 mt-10">Pairing Code:</div>
-                    <div class="panel-subtitle pairing_code">---</div>
+    <div id="headset_details" style="display: none;">
+        <div class="panel card">
+            <div class="card-image">
+                <img class="img-responsive" src="/static/img/mini_landscape.png" alt="conVRged Logo">
+            </div>
+            <div class="panel-header text-center">
+                <figure class="avatar avatar-lg" style="background: none;"><img
+                        src="/static/favicons/android-chrome-192x192.png" alt="Avatar"></figure>
+                <div class="panel-title h5 mt-10">Headset ID:</div>
+                <code class="panel-subtitle hw_id">---</code>
+                <br>
+                <br>
+                <div class="container">
+                    <div class="columns">
+                        <div class="col-6">
+                            <div class="panel-title h5 mt-10">Pairing Code:</div>
+                            <code class="panel-subtitle pairing_code">---</code>
+                        </div>
+                        <div class="col-6">
+                            <a href="/pair">
+                                <button class="btn btn-primary btn-lg tooltip tooltip-right" id="pair_new"
+                                        data-tooltip="Clear this headset and pair a new headset">Pair New
+                                </button>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">Current Room</div>
-                            <input class="btn current_room" type="text" id="current_room" placeholder="----">
+                <hr>
+            </div>
+
+
+            <div class="panel-body">
+                <div class="container">
+                    <div class="columns">
+                        <div class="tile tile-centered col-6">
+                            <div class="tile-content">
+                                <div class="tile-title text-bold">First Seen</div>
+                                <div class="tile-subtitle date_created">---</div>
+                            </div>
                         </div>
-                        <div class="tile-action">
-                            <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_room_id"
-                                data-tooltip="Set Room ID">Set</button>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">First Seen</div>
-                            <div class="tile-subtitle date_created">---</div>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">Last Login</div>
-                            <div class="tile-subtitle last_used">---</div>
+                        <div class="tile tile-centered col-6">
+                            <div class="tile-content">
+                                <div class="tile-title text-bold">Last Login</div>
+                                <div class="tile-subtitle last_used">---</div>
+                            </div>
                         </div>
                     </div>
-                    <br>
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">User Name</div>
-                            <input class="btn user_name" type="text" id="user_name" placeholder="----">
-                            <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_user_name"
-                                data-tooltip="">Set</button>
-                        </div>
-                        <div class="tile-action">
-                        </div>
-                    </div>
-                    <br>
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">TV URL</div>
-                            <input class="btn tv_url" type="text" id="tv_url" placeholder="----">
-                            <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_tv_url"
-                                data-tooltip="">Set</button>
-                        </div>
-                        <div class="tile-action">
-                        </div>
-                    </div>
-                    <br>
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">User Color</div>
-                            <input class="btn user_color coloris" type="text" id="user_color" placeholder="#ffffff">
-                            <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_user_color"
-                                data-tooltip="Set User Color">Set</button>
-                        </div>
-                        <div class="tile-action">
-                        </div>
-                    </div>
-                    <br>
-                    <div class="tile tile-centered">
-                        <div class="tile-content">
-                            <div class="tile-title text-bold">Carpet Color</div>
-                            <input class="btn carpet_color coloris" type="text" id="carpet_color" placeholder="#ffffff">
-                            <button class="btn btn-primary btn-lg tooltip tooltip-left" id="set_carpet_color"
-                                data-tooltip="Set Carpet Color">Set</button>
-                        </div>
-                        <div class="tile-action">
-                        </div>
-                    </div>
-                    <br>
-                    <br>
                 </div>
+
+                <br>
+
+                <div class="divider text-center" data-content="User Settings"></div>
+
+                <div class="tile tile-centered">
+                    <div class="tile-content">
+                        <div class="tile-title text-bold">User Name</div>
+                        <input class="btn user_name" type="text" id="user_name" placeholder="----">
+                        <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_user_name"
+                                data-tooltip="Set Username">Set
+                        </button>
+                    </div>
+                </div>
+                <!--                <br>-->
+                <!--                    <div class="tile tile-centered">-->
+                <!--                        <div class="tile-content">-->
+                <!--                            <div class="tile-title text-bold">TV URL</div>-->
+                <!--                            <input class="btn tv_url" type="text" id="tv_url" placeholder="&#45;&#45;&#45;&#45;">-->
+                <!--                            <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_tv_url"-->
+                <!--                                data-tooltip="">Set</button>-->
+                <!--                        </div>-->
+                <!--                        <div class="tile-action">-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                <br>-->
+                <!--                                    <div class="tile tile-centered">-->
+                <!--                                        <div class="tile-content">-->
+                <!--                                            <div class="tile-title text-bold">User Color</div>-->
+                <!--                                            <input class="btn user_color coloris" type="text" id="user_color" placeholder="#ffffff">-->
+                <!--                                            <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_user_color"-->
+                <!--                                                data-tooltip="Set User Color">Set</button>-->
+                <!--                                        </div>-->
+                <!--                                        <div class="tile-action">-->
+                <!--                                        </div>-->
+                <!--                                    </div>-->
+
+
+                <br>
+                <div class="tile tile-centered">
+                    <div class="tile-content">
+                        <div class="tile-title text-bold">Avatar URL</div>
+                        <div class="tile-subtitle">
+                            <a href="https://convrged.readyplayer.me" target="blank">
+                                Create New Avatar
+                                <svg style="width:1em;height:1em" viewBox="0 0 24 24">
+                                    <path fill="currentColor"
+                                          d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <input class="btn avatar_url" type="text" id="avatar_url" placeholder="----">
+                        <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_avatar_url"
+                                data-tooltip="Set Avatar URL">Set
+                        </button>
+                    </div>
+                    <div class="tile-action">
+                    </div>
+                </div>
+
+
+                <br>
+
+                <div class="divider text-center" data-content="Room Settings"></div>
+                <div class="tile tile-centered">
+                    <div class="tile-content">
+                        <div class="tile-title text-bold">Current Room</div>
+                        <input class="btn current_room" type="text" id="current_room" placeholder="----">
+                        <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_room_id"
+                                data-tooltip="Set Room ID">Set
+                        </button>
+                    </div>
+                </div>
+                <br>
+                <div class="tile tile-centered">
+                    <div class="tile-content">
+                        <div class="tile-title text-bold">Carpet Color</div>
+                        <input class="btn carpet_color coloris" type="text" id="carpet_color" placeholder="#ffffff">
+                        <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_carpet_color"
+                                data-tooltip="Set Carpet Color">Set
+                        </button>
+                    </div>
+                    <div class="tile-action">
+                    </div>
+                </div>
+                <br>
+                <div>
+                    <p>To share your screen, download <a href="https://github.com/velaboratory/VEL-Share">VEL-Share
+                        <svg style="width:1em;height:1em" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                  d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z"/>
+                        </svg>
+                    </a></p>
+                </div>
+                <br>
             </div>
         </div>
+    </div>
 
-        <script type="text/javascript" src="/static/js/coloris.min.js"></script>
-        <script>
+    <script type="text/javascript" src="/static/js/coloris.min.js"></script>
+    <script>
 
-            let submit_button = document.getElementById('submit_pairing_code');
-            let pair_code_input = document.getElementById('pair_code');
-            let loading = document.getElementById('loading');
-            let enter_pairing_id = document.getElementById('enter_pairing_id');
-            let headset_details = document.getElementById('headset_details');
-            let hw_id_field = document.getElementById('hw_id');
-            let failure = document.getElementById('failure');
-            let set_room_id = document.getElementById('set_room_id');
-            let current_room = document.getElementById('current_room');
+        let submit_button = document.getElementById('submit_pairing_code');
+        let pair_code_input = document.getElementById('pair_code');
+        let loading = document.getElementById('loading');
+        let enter_pairing_id = document.getElementById('enter_pairing_id');
+        let headset_details = document.getElementById('headset_details');
+        let hw_id_field = document.getElementById('hw_id');
+        let failure = document.getElementById('failure');
+        let current_room = document.getElementById('current_room');
+        let set_room_id = document.getElementById('set_room_id');
+        let set_user_color = document.getElementById('set_user_color');
+        let user_color = document.getElementById('user_color');
+        let carpet_color = document.getElementById('carpet_color');
+        let set_user_name = document.getElementById('set_user_name');
+        let set_tv_url = document.getElementById('set_tv_url');
+        let set_carpet_color = document.getElementById('set_carpet_color');
+        let set_avatar_url = document.getElementById('set_avatar_url');
 
 
-            // check cookie
-            let hw_id = getCookie('hw_id');
-            if (hw_id !== "" && hw_id !== undefined && hw_id !== "undefined") {
+        // check cookie
+        let hw_id = getCookie('hw_id');
+        if (hw_id !== "" && hw_id !== undefined && hw_id !== "undefined") {
 
-                httpGetAsync('/api/get_state/' + hw_id, (resp) => {
-                    console.log(resp);
-                    let respData = JSON.parse(resp);
+            httpGetAsync('/api/get_state/' + hw_id, (resp) => {
+                console.log(resp);
+                let respData = JSON.parse(resp);
 
-                    if ("error" in respData) {
-                        window.location.href = "/pair";
-                    }
-
-                    writeClass('hw_id', respData['user']['hw_id']);
-                    writeClass('pairing_code', respData['user']['pairing_code']);
-                    writeValue('current_room', respData['user']['current_room']);
-                    writeClass('date_created', respData['user']['date_created'] + "<br>" + timeSinceString(respData['user']['date_created']) + " ago");
-                    writeClass('last_used', respData['user']['last_used'] + "<br>" + timeSinceString(respData['user']['last_used']) + " ago");
-                    writeValue('user_color', respData['user']['user_color']);
-                    writeValue('user_name', respData['user']['user_name']);
-                    if (respData['room']) {
-                        writeValue('tv_url', respData['room']['tv_url']);
-                        writeValue('carpet_color', respData['room']['carpet_color']);
-                    }
-
-                    loading.style.display = "none";
-                    headset_details.style.display = "block";
-                }, (status) => {
-                    loading.style.display = "none";
-                    failure.style.display = "block";
-                });
-
-                function setUserData(data) {
-                    data["sender_id"] = "web";
-                    httpPostAsync('/api/set_headset_details/' + hw_id,
-                        data,
-                        (resp) => { console.log('success'); },
-                        (status) => { console.log('fail'); }
-                    );
-                }
-                function setRoomData(data) {
-                    data["sender_id"] = "web";
-                    httpPostAsync('/api/set_room_details/' + current_room.value,
-                        data,
-                        (resp) => { console.log('success'); },
-                        (status) => { console.log('fail'); }
-                    );
+                if ("error" in respData) {
+                    window.location.href = "/pair";
                 }
 
-                set_room_id.addEventListener('click', () => {
-                    setUserData({ "current_room": current_room.value });
+                writeClass('hw_id', respData['user']['hw_id']);
+                writeClass('pairing_code', respData['user']['pairing_code']);
+                writeValue('current_room', respData['user']['current_room']);
+                writeClass('date_created', respData['user']['date_created'] + "<br>" + timeSinceString(respData['user']['date_created']) + " ago");
+                writeClass('last_used', respData['user']['last_used'] + "<br>" + timeSinceString(respData['user']['last_used']) + " ago");
+                writeValue('user_color', respData['user']['user_color']);
+                if (user_color) user_color.parentElement.style.color = "" + respData['user']['user_color'];
+                writeValue('user_name', respData['user']['user_name']);
+                writeValue('avatar_url', respData['user']['avatar_url']);
+                if (respData['room']) {
+                    writeValue('tv_url', respData['room']['tv_url']);
+                    writeValue('carpet_color', respData['room']['carpet_color']);
+                    if (carpet_color) carpet_color.parentElement.style.color = "" + respData['room']['carpet_color'];
+                }
+
+
+                Coloris({
+                    el: '.coloris',
+                    swatches: [
+                        '#264653',
+                        '#2a9d8f',
+                        '#e9c46a',
+                        '#f4a261',
+                        '#e76f51',
+                        '#d62828',
+                        '#023e8a',
+                        '#0077b6',
+                        '#0096c7',
+                        '#00b4d8',
+                        '#48cae4',
+                    ]
                 });
-                document.getElementById('set_user_color').addEventListener('click', () => {
-                    setUserData({ "user_color": document.getElementById('user_color').value });
-                });
-                document.getElementById('set_user_name').addEventListener('click', () => {
-                    setUserData({ "user_name": document.getElementById('user_name').value });
-                });
-                document.getElementById('set_tv_url').addEventListener('click', () => {
-                    setRoomData({ "tv_url": document.getElementById('tv_url').value });
-                });
-                document.getElementById('set_carpet_color').addEventListener('click', () => {
-                    setRoomData({ "carpet_color": document.getElementById('carpet_color').value });
-                });
 
-            } else {
-                window.location.href = "/pair";
-            }
-
-
-
-
-
-
-            Coloris({
-                el: '.coloris',
-                swatches: [
-                    '#264653',
-                    '#2a9d8f',
-                    '#e9c46a',
-                    '#f4a261',
-                    '#e76f51',
-                    '#d62828',
-                    '#023e8a',
-                    '#0077b6',
-                    '#0096c7',
-                    '#00b4d8',
-                    '#48cae4',
-                ]
+                loading.style.display = "none";
+                headset_details.style.display = "block";
+            }, (status) => {
+                loading.style.display = "none";
+                failure.style.display = "block";
             });
 
+            function setUserData(data) {
+                data["sender_id"] = "web";
+                httpPostAsync('/api/set_headset_details/' + hw_id,
+                    data,
+                    (resp) => {
+                        console.log('success');
+                    },
+                    (status) => {
+                        console.log('fail');
+                    }
+                );
+            }
 
-        </script>
-    </div>
+            function setRoomData(data) {
+                data["sender_id"] = "web";
+                httpPostAsync('/api/set_room_details/' + current_room.value,
+                    data,
+                    (resp) => {
+                        console.log('success');
+                    },
+                    (status) => {
+                        console.log('fail');
+                    }
+                );
+            }
+
+            if (set_room_id) {
+                set_room_id.addEventListener('click', () => {
+                    setUserData({"current_room": current_room.value});
+                });
+            }
+            if (set_user_color) {
+                set_user_color.addEventListener('click', () => {
+                    setUserData({"user_color": document.getElementById('user_color').value});
+                });
+            }
+            if (set_user_name) {
+                set_user_name.addEventListener('click', () => {
+                    setUserData({"user_name": document.getElementById('user_name').value});
+                });
+            }
+            if (set_tv_url) {
+                set_tv_url.addEventListener('click', () => {
+                    setRoomData({"tv_url": document.getElementById('tv_url').value});
+                });
+            }
+            if (set_carpet_color) {
+                set_carpet_color.addEventListener('click', () => {
+                    setRoomData({"carpet_color": document.getElementById('carpet_color').value});
+                });
+            }
+            if (set_avatar_url) {
+                set_avatar_url.addEventListener('click', () => {
+                    setUserData({"avatar_url": document.getElementById('avatar_url').value});
+                });
+            }
+
+        } else {
+            window.location.href = "/pair";
+        }
+
+
+        Coloris({
+            el: '.coloris',
+            swatches: [
+                '#264653',
+                '#2a9d8f',
+                '#e9c46a',
+                '#f4a261',
+                '#e76f51',
+                '#d62828',
+                '#023e8a',
+                '#0077b6',
+                '#0096c7',
+                '#00b4d8',
+                '#48cae4',
+            ]
+        });
+
+
+    </script>
+</div>
 </body>
 
 </html>
