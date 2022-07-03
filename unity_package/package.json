@@ -1,0 +1,17 @@
+{
+  "name": "edu.uga.engr.vel.vel-connect",
+  "displayName": "VEL-Connect",
+  "version": "1.0.0",
+  "unity": "2019.1",
+  "description": "Web-based configuration for VR applications",
+  "keywords": [],
+  "author": {
+    "name": "Virtual Experiences Laboratory",
+    "email": "velaboratory@gmail.com",
+    "url": "https://vel.engr.uga.edu/"
+  },
+  "samples": [],
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.0.0"
+  }
+}

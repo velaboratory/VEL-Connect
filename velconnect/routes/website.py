@@ -1,11 +1,11 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
-
 # APIRouter creates path operations for user module
 router = APIRouter(
     prefix="",
     tags=["Website"],
+    include_in_schema=False
 )
 
 

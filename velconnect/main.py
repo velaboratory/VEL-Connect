@@ -1,10 +1,13 @@
-from imp import reload
 import uvicorn
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from api import router as api_router
-from website import router as website_router
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+from routes.api import router as api_router
+from routes.api_v2 import router as api_v2_router
+from routes.user_count import router as user_count_router
+from routes.oculus_api import router as oculus_api_router
+from routes.website import router as website_router
 
 app = FastAPI()
 
@@ -26,6 +29,9 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(api_router)
+app.include_router(api_v2_router)
+app.include_router(user_count_router)
+app.include_router(oculus_api_router)
 app.include_router(website_router)
 
 if __name__ == '__main__':
