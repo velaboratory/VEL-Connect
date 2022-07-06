@@ -14,7 +14,7 @@ namespace VELConnect
 	public class VELConnectManager : MonoBehaviour
 	{
 		public string velConnectUrl = "http://localhost";
-		public static VELConnectManager instance;
+		private static VELConnectManager instance;
 
 		public class State
 		{
@@ -36,7 +36,8 @@ namespace VELConnect
 				/// </summary>
 				public string TryGetData(string key)
 				{
-					return data?.TryGetValue(key, out string val) == true ? val : null;
+					string val = null;
+					return data?.TryGetValue(key, out val) == true ? val : null;
 				}
 			}
 
@@ -50,6 +51,15 @@ namespace VELConnect
 				public string last_modified;
 				public string last_accessed;
 				public Dictionary<string, string> data;
+
+				/// <summary>
+				/// Returns the value if it exists, otherwise null
+				/// </summary>
+				public string TryGetData(string key)
+				{
+					string val = null;
+					return data?.TryGetValue(key, out val) == true ? val : null;
+				}
 			}
 
 			public Device device;
@@ -62,6 +72,25 @@ namespace VELConnect
 		public static Action<string, string> OnDeviceFieldChanged;
 		public static Action<string, string> OnDeviceDataChanged;
 		public static Action<string, string> OnRoomDataChanged;
+
+		private static readonly Dictionary<string, List<CallbackListener>> deviceFieldCallbacks = new Dictionary<string, List<CallbackListener>>();
+		private static readonly Dictionary<string, List<CallbackListener>> deviceDataCallbacks = new Dictionary<string, List<CallbackListener>>();
+		private static readonly Dictionary<string, List<CallbackListener>> roomDataCallbacks = new Dictionary<string, List<CallbackListener>>();
+
+		private struct CallbackListener
+		{
+			/// <summary>
+			/// Used so that other objects don't have to remove listeners themselves
+			/// </summary>
+			public MonoBehaviour keepAliveObject;
+
+			public Action<string> callback;
+
+			/// <summary>
+			/// Sends the first state received from the network or the state at binding time
+			/// </summary>
+			public bool sendInitialState;
+		}
 
 		public static int PairingCode
 		{
@@ -80,10 +109,10 @@ namespace VELConnect
 		{
 			get
 			{
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
-			// allows running multiple builds on the same computer
-			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
-			return SystemInfo.deviceUniqueIdentifier + "_BUILD";
+#if UNITY_EDITOR
+				// allows running multiple builds on the same computer
+				// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
+				return SystemInfo.deviceUniqueIdentifier + "_EDITOR";
 #else
 				return SystemInfo.deviceUniqueIdentifier;
 #endif
@@ -137,7 +166,7 @@ namespace VELConnect
 					{ "version", Application.version },
 					{ "platform", SystemInfo.operatingSystem },
 				};
-				PostRequestCallback(velConnectUrl + "/api/v2/update_user_count", JsonConvert.SerializeObject(postData));
+				PostRequestCallback(velConnectUrl + "/api/update_user_count", JsonConvert.SerializeObject(postData));
 			});
 		}
 
@@ -147,10 +176,12 @@ namespace VELConnect
 			{
 				try
 				{
-					GetRequestCallback(velConnectUrl + "/api/v2/get_state/" + DeviceId, json =>
+					GetRequestCallback(velConnectUrl + "/api/v2/device/get_data/" + DeviceId, json =>
 					{
 						State state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
+
+						bool isInitialState = false;
 
 						// first load stuff
 						if (lastState == null)
@@ -164,8 +195,9 @@ namespace VELConnect
 								Debug.LogError(e);
 							}
 
-							lastState = state;
-							return;
+							isInitialState = true;
+							// lastState = state;
+							// return;
 						}
 
 
@@ -176,51 +208,125 @@ namespace VELConnect
 							foreach (FieldInfo fieldInfo in fields)
 							{
 								string newValue = fieldInfo.GetValue(state.device) as string;
-								string oldValue = fieldInfo.GetValue(lastState.device) as string;
+								string oldValue = lastState != null ? fieldInfo.GetValue(lastState.device) as string : null;
 								if (newValue != oldValue)
 								{
 									try
 									{
-										OnDeviceFieldChanged?.Invoke(fieldInfo.Name, newValue);
+										if (!isInitialState) OnDeviceFieldChanged?.Invoke(fieldInfo.Name, newValue);
 									}
 									catch (Exception e)
 									{
 										Debug.LogError(e);
+									}
+
+									// send specific listeners data
+									if (deviceFieldCallbacks.ContainsKey(fieldInfo.Name))
+									{
+										// clear the list of old listeners
+										deviceFieldCallbacks[fieldInfo.Name].RemoveAll(e => e.keepAliveObject == null);
+
+										// send the callbacks
+										deviceFieldCallbacks[fieldInfo.Name].ForEach(e =>
+										{
+											if (!isInitialState || e.sendInitialState)
+											{
+												try
+												{
+													e.callback(newValue);
+												}
+												catch (Exception ex)
+												{
+													Debug.LogError(ex);
+												}
+											}
+										});
 									}
 								}
 							}
 
-							foreach (KeyValuePair<string, string> elem in state.device.data)
+							if (state.device.data != null)
 							{
-								lastState.device.data.TryGetValue(elem.Key, out string oldValue);
-								if (elem.Value != oldValue)
+								foreach (KeyValuePair<string, string> elem in state.device.data)
 								{
-									try
+									string oldValue = null;
+									lastState?.device.data.TryGetValue(elem.Key, out oldValue);
+									if (elem.Value != oldValue)
 									{
-										OnDeviceDataChanged?.Invoke(elem.Key, elem.Value);
-									}
-									catch (Exception e)
-									{
-										Debug.LogError(e);
+										try
+										{
+											if (!isInitialState) OnDeviceDataChanged?.Invoke(elem.Key, elem.Value);
+										}
+										catch (Exception ex)
+										{
+											Debug.LogError(ex);
+										}
+
+										// send specific listeners data
+										if (deviceDataCallbacks.ContainsKey(elem.Key))
+										{
+											// clear the list of old listeners
+											deviceDataCallbacks[elem.Key].RemoveAll(e => e.keepAliveObject == null);
+
+											// send the callbacks
+											deviceDataCallbacks[elem.Key].ForEach(e =>
+											{
+												if (!isInitialState || e.sendInitialState)
+												{
+													try
+													{
+														e.callback(elem.Value);
+													}
+													catch (Exception ex)
+													{
+														Debug.LogError(ex);
+													}
+												}
+											});
+										}
 									}
 								}
 							}
 						}
 
-						if (state.room.modified_by != DeviceId)
+						if (state.room.modified_by != DeviceId && state.room.data != null)
 						{
 							foreach (KeyValuePair<string, string> elem in state.room.data)
 							{
-								lastState.room.data.TryGetValue(elem.Key, out string oldValue);
+								string oldValue = null;
+								lastState?.room.data.TryGetValue(elem.Key, out oldValue);
 								if (elem.Value != oldValue)
 								{
 									try
 									{
-										OnRoomDataChanged?.Invoke(elem.Key, elem.Value);
+										if (!isInitialState) OnRoomDataChanged?.Invoke(elem.Key, elem.Value);
 									}
 									catch (Exception e)
 									{
 										Debug.LogError(e);
+									}
+
+									// send specific listeners data
+									if (roomDataCallbacks.ContainsKey(elem.Key))
+									{
+										// clear the list of old listeners
+										roomDataCallbacks[elem.Key].RemoveAll(e => e.keepAliveObject == null);
+
+										// send the callbacks
+										roomDataCallbacks[elem.Key].ForEach(e =>
+										{
+											if (!isInitialState || e.sendInitialState)
+											{
+												try
+												{
+													e.callback(elem.Value);
+												}
+												catch (Exception ex)
+												{
+													Debug.LogError(ex);
+												}
+											}
+										});
 									}
 								}
 							}
@@ -239,16 +345,130 @@ namespace VELConnect
 			}
 		}
 
+		/// <summary>
+		/// Adds a change listener callback to a particular field name within the Device main fields.
+		/// </summary>
+		public static void AddDeviceFieldListener(string key, MonoBehaviour keepAliveObject, Action<string> callback, bool sendInitialState = false)
+		{
+			if (!deviceFieldCallbacks.ContainsKey(key))
+			{
+				deviceFieldCallbacks[key] = new List<CallbackListener>();
+			}
+
+			deviceFieldCallbacks[key].Add(new CallbackListener()
+			{
+				keepAliveObject = keepAliveObject,
+				callback = callback,
+				sendInitialState = sendInitialState
+			});
+
+			if (sendInitialState)
+			{
+				if (instance != null && instance.lastState?.device != null)
+				{
+					if (instance.lastState.device.GetType().GetField(key)?.GetValue(instance.lastState.device) is string val)
+					{
+						try
+						{
+							callback(val);
+						}
+						catch (Exception e)
+						{
+							Debug.LogError(e);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Adds a change listener callback to a particular field name within the Device data JSON.
+		/// </summary>
+		public static void AddDeviceDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback, bool sendInitialState = false)
+		{
+			if (!deviceDataCallbacks.ContainsKey(key))
+			{
+				deviceDataCallbacks[key] = new List<CallbackListener>();
+			}
+
+			deviceDataCallbacks[key].Add(new CallbackListener()
+			{
+				keepAliveObject = keepAliveObject,
+				callback = callback,
+				sendInitialState = sendInitialState
+			});
+
+			if (sendInitialState)
+			{
+				string val = GetDeviceData(key);
+				if (val != null)
+				{
+					try
+					{
+						callback(val);
+					}
+					catch (Exception e)
+					{
+						Debug.LogError(e);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Adds a change listener callback to a particular field name within the Room data JSON.
+		/// </summary>
+		public static void AddRoomDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback, bool sendInitialState = false)
+		{
+			if (!roomDataCallbacks.ContainsKey(key))
+			{
+				roomDataCallbacks[key] = new List<CallbackListener>();
+			}
+
+			roomDataCallbacks[key].Add(new CallbackListener()
+			{
+				keepAliveObject = keepAliveObject,
+				callback = callback,
+				sendInitialState = sendInitialState
+			});
+
+			if (sendInitialState)
+			{
+				string val = GetRoomData(key);
+				if (val != null)
+				{
+					try
+					{
+						callback(val);
+					}
+					catch (Exception e)
+					{
+						Debug.LogError(e);
+					}
+				}
+			}
+		}
+
+		public static string GetDeviceData(string key)
+		{
+			return instance != null ? instance.lastState?.device?.TryGetData(key) : null;
+		}
+
+		public static string GetRoomData(string key)
+		{
+			return instance != null ? instance.lastState?.room?.TryGetData(key) : null;
+		}
+
 
 		/// <summary>
 		/// Sets data on the device keys themselves
 		/// </summary>
 		public static void SetDeviceBaseData(Dictionary<string, object> data)
 		{
-			data["modified_by"] = DeviceId;
 			instance.PostRequestCallback(
 				instance.velConnectUrl + "/api/v2/device/set_data/" + DeviceId,
-				JsonConvert.SerializeObject(data)
+				JsonConvert.SerializeObject(data),
+				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
 		}
 
@@ -259,11 +479,8 @@ namespace VELConnect
 		{
 			instance.PostRequestCallback(
 				instance.velConnectUrl + "/api/v2/device/set_data/" + DeviceId,
-				JsonConvert.SerializeObject(new Dictionary<string, object>
-				{
-					{ "modified_by", DeviceId },
-					{ "data", data }
-				})
+				JsonConvert.SerializeObject(new Dictionary<string, object> { { "data", data } }),
+				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
 		}
 
@@ -275,10 +492,10 @@ namespace VELConnect
 				return;
 			}
 
-			data["modified_by"] = DeviceId;
 			instance.PostRequestCallback(
 				instance.velConnectUrl + "/api/v2/set_data/" + Application.productName + "_" + VelNetManager.Room,
-				JsonConvert.SerializeObject(data)
+				JsonConvert.SerializeObject(data),
+				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
 		}
 
@@ -308,13 +525,13 @@ namespace VELConnect
 			}
 		}
 
-		public void PostRequestCallback(string url, string postData, Action<string> successCallback = null,
+		public void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null, Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
-			StartCoroutine(PostRequestCallbackCo(url, postData, successCallback, failureCallback));
+			StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
 		}
 
-		private static IEnumerator PostRequestCallbackCo(string url, string postData, Action<string> successCallback = null,
+		private static IEnumerator PostRequestCallbackCo(string url, string postData, Dictionary<string, string> headers = null, Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
 			UnityWebRequest webRequest = new UnityWebRequest(url, "POST");
@@ -322,6 +539,14 @@ namespace VELConnect
 			UploadHandlerRaw uploadHandler = new UploadHandlerRaw(bodyRaw);
 			webRequest.uploadHandler = uploadHandler;
 			webRequest.SetRequestHeader("Content-Type", "application/json");
+			if (headers != null)
+			{
+				foreach (KeyValuePair<string, string> keyValuePair in headers)
+				{
+					webRequest.SetRequestHeader(keyValuePair.Key, keyValuePair.Value);
+				}
+			}
+
 			yield return webRequest.SendWebRequest();
 
 			switch (webRequest.result)

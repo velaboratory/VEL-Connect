@@ -45,48 +45,48 @@
 </head>
 
 <body>
-    <div class="container">
-        <!-- <div class="hero bg-gray">
-            <div class="hero-body">
-                <h1>Pair your headset.</h1>
-            </div>
-        </div> -->
+<div class="container">
+    <!-- <div class="hero bg-gray">
+        <div class="hero-body">
+            <h1>Pair your headset.</h1>
+        </div>
+    </div> -->
 
-        <div class="card">
-            <div class="card-image">
-                <img src="/static/img/pair_code_screenshot.png" class="img-responsive">
-            </div>
-            <div class="card-header">
-                <div class="card-title h5">Enter Pairing Code</div>
-                <div class="card-subtitle text-gray"></div>
-            </div>
-            <div class="card-body">
-                You can find the code in the bottom left of your menu tablet in conVRged.
-            </div>
-            <div class="card-footer centered">
-                <input class="btn" type="text" id="pair_code" placeholder="0000">
-                <button class="btn btn-primary" id="submit_pairing_code">Submit</button>
-            </div>
+    <div class="card">
+        <div class="card-image">
+            <img src="/static/img/pair_code_screenshot.png" class="img-responsive">
+        </div>
+        <div class="card-header">
+            <div class="card-title h5">Enter Pairing Code</div>
+            <div class="card-subtitle text-gray"></div>
+        </div>
+        <div class="card-body">
+            You can find the code in the bottom left of your menu tablet in conVRged.
+        </div>
+        <div class="card-footer centered">
+            <input class="btn" type="text" id="pair_code" placeholder="0000">
+            <button class="btn btn-primary" id="submit_pairing_code">Submit</button>
         </div>
     </div>
+</div>
 
-    <script>
+<script>
 
-        let submit_button = document.getElementById('submit_pairing_code');
-        let pair_code_input = document.getElementById('pair_code');
-        submit_button.addEventListener('click', () => {
-            httpGetAsync('/api/pair_headset/' + pair_code_input.value, (resp) => {
-                console.log(resp);
-                let respData = JSON.parse(resp);
-                if (respData['hw_id'] != '') {
-                    setCookie('hw_id', respData['hw_id'], 60);
-                    window.location.href = "/";
-                }
-            }, (status) => {
-                window.location.href = "/failure";
-            });
+    let submit_button = document.getElementById('submit_pairing_code');
+    let pair_code_input = document.getElementById('pair_code');
+    submit_button.addEventListener('click', () => {
+        httpGetAsync('/api/v2/get_device_by_pairing_code/' + pair_code_input.value, (resp) => {
+            console.log(resp);
+            let respData = JSON.parse(resp);
+            if (respData['hw_id'] !== '') {
+                setCookie('hw_id', respData['hw_id'], 60);
+                window.location.href = "/";
+            }
+        }, (status) => {
+            window.location.href = "/failure";
         });
-    </script>
+    });
+</script>
 </body>
 
 </html>

@@ -24,6 +24,7 @@ class DB:
         return conn, curr
 
     def query(self, query_string: str, data: dict = None) -> list:
+        conn = None
         try:
             conn, curr = self.create_or_connect()
             if data is not None:
@@ -35,7 +36,8 @@ class DB:
             return values
         except:
             print(traceback.print_exc())
-            conn.close()
+            if conn is not None:
+                conn.close()
             raise
 
     def insert(self, query_string: str, data: dict = None) -> bool:

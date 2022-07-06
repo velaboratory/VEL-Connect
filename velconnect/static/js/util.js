@@ -18,8 +18,8 @@ function httpGetAsync(theUrl, callback, failCallback) {
 function httpPostAsync(theUrl, data, callback, failCallback) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
+        if (xmlHttp.readyState === 4) {
+            if (xmlHttp.status === 200) {
                 callback(xmlHttp.responseText);
             } else {
                 failCallback(xmlHttp.status);

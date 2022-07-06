@@ -64,12 +64,12 @@ def get_device_by_pairing_code(pairing_code: str):
 
 def create_device(hw_id: str):
     db.insert("""
-    INSERT IGNORE INTO `Device`(hw_id) VALUES (:hw_id);
+    INSERT OR IGNORE INTO `Device`(hw_id) VALUES (:hw_id);
     """, {'hw_id': hw_id})
 
 
 @router.get('/device/get_data/{hw_id}')
-def get_state(hw_id: str):
+def get_state(request: fastapi.Request, hw_id: str):
     """Gets the device state"""
 
     devices = db.query("""
@@ -77,26 +77,35 @@ def get_state(hw_id: str):
     """, {'hw_id': hw_id})
     if len(devices) == 0:
         return {'error': "Can't find device with that id."}
+    block = dict(devices[0])
+    if 'data' in block and block['data'] is not None:
+        block['data'] = json.loads(block['data'])
 
-    room_data = get_data(f"{devices[0]['current_app']}_{devices[0]['current_room']}")
+    room_key: str = f"{devices[0]['current_app']}_{devices[0]['current_room']}"
+    room_data = get_data(room_key)
 
-    return {'device': devices[0], 'room': room_data}
+    if "error" in room_data:
+        set_data(request, data={}, key=room_key, modified_by=None, category="room")
+        room_data = get_data(room_key)
+
+    return {'device': block, 'room': room_data}
 
 
 @router.post('/device/set_data/{hw_id}')
-def set_state(hw_id: str, data: dict, request: fastapi.Request):
+def set_state(request: fastapi.Request, hw_id: str, data: dict, modified_by: str = None):
     """Sets the device state"""
 
     create_device(hw_id)
 
     # add the client's IP address if no sender specified
-    if 'modified_by' not in data:
-        data['modified_by'] = str(request.client) + "_" + str(request.headers)
+    if 'modified_by' in data:
+        modified_by = data['modified_by']
+    if modified_by is None:
+        modified_by: str = str(request.client) + "_" + str(request.headers)
 
     allowed_keys: list[str] = [
         'os_info',
         'friendly_name',
-        'modified_by',
         'current_app',
         'current_room',
         'pairing_code',
@@ -107,15 +116,17 @@ def set_state(hw_id: str, data: dict, request: fastapi.Request):
             db.insert(f"""
                 UPDATE `Device` 
                 SET {key}=:value,
-                    last_modified=CURRENT_TIMESTAMP 
+                    last_modified=CURRENT_TIMESTAMP, 
+                    modified_by=:modified_by 
                 WHERE `hw_id`=:hw_id;
                 """,
                       {
                           'value': data[key],
                           'hw_id': hw_id,
-                          'sender_id': data['sender_id']
+                          'modified_by': modified_by
                       })
         if key == "data":
+            new_data = data['data']
             # get the old json values and merge the data
             old_data_query = db.query("""
                 SELECT data
@@ -124,8 +135,10 @@ def set_state(hw_id: str, data: dict, request: fastapi.Request):
                 """, {"hw_id": hw_id})
 
             if len(old_data_query) == 1:
-                old_data: dict = json.loads(old_data_query[0]["data"])
-                data = {**old_data, **data}
+                old_data: dict = {}
+                if old_data_query[0]['data'] is not None:
+                    old_data = json.loads(old_data_query[0]["data"])
+                new_data = {**old_data, **new_data}
 
             # add the data to the db
             db.insert("""
@@ -133,7 +146,7 @@ def set_state(hw_id: str, data: dict, request: fastapi.Request):
                 SET data=:data,
                     last_modified=CURRENT_TIMESTAMP
                 WHERE hw_id=:hw_id;
-                """, {"hw_id": hw_id, "data": json.dumps(data)})
+                """, {"hw_id": hw_id, "data": json.dumps(new_data)})
     return {'success': True}
 
 
@@ -143,18 +156,22 @@ def generate_id(length: int = 4) -> str:
 
 
 @router.post('/set_data')
-def store_data_with_random_key(request: fastapi.Request, data: dict, category: str = None) -> dict:
+def set_data_with_random_key(request: fastapi.Request, data: dict, modified_by: str = None,
+                             category: str = None) -> dict:
     """Creates a little storage bucket for arbitrary data with a random key"""
-    return store_data(request, data, None, category)
+    return set_data(request, data, None, modified_by, category)
 
 
 @router.post('/set_data/{key}')
-def store_data(request: fastapi.Request, data: dict, key: str = None, modified_by: str = None, category: str = None) -> dict:
+def set_data(request: fastapi.Request, data: dict, key: str = None, modified_by: str = None,
+             category: str = None) -> dict:
     """Creates a little storage bucket for arbitrary data"""
 
     # add the client's IP address if no sender specified
+    if 'modified_by' in data:
+        modified_by = data['modified_by']
     if modified_by is None:
-        modified_by = str(request.client) + "_" + str(request.headers)
+        modified_by: str = str(request.client) + "_" + str(request.headers)
 
     # generates a key if none was supplied
     if key is None:
@@ -189,7 +206,7 @@ def get_data(key: str) -> dict:
     """Gets data from a storage bucket for arbitrary data"""
 
     data = db.query("""
-    SELECT data 
+    SELECT * 
     FROM `DataBlock`
     WHERE id=:id 
     """, {"id": key})
@@ -202,7 +219,11 @@ def get_data(key: str) -> dict:
 
     try:
         if len(data) == 1:
-            return json.loads(data[0])
+            block = dict(data[0])
+            if 'data' in block and block['data'] is not None:
+                block['data'] = json.loads(block['data'])
+            return block
         return {'error': 'Not found'}
-    except:
+    except Exception as e:
+        print(e)
         return {'error': 'Unknown. Maybe no data at this key.'}
