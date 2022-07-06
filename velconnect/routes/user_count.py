@@ -27,42 +27,28 @@ post_user_count_example = {
 }
 
 
-@router.post('/update_user_count')
-def update_user_count(data: dict = fastapi.Body(..., examples=post_user_count_example)) -> dict:
-    if 'app_id' not in data:
-        data['app_id'] = ""
-
+@router.post('/update_user_count', tags=["User Count"])
+def update_user_count(data: dict):
     db.insert("""
-    REPLACE INTO `UserCount` (
-        timestamp,
-        hw_id,
-        app_id,
-        room_id,
-        total_users,
-        room_users,
-        version,
-        platform
-    )
+    REPLACE INTO `UserCount`
     VALUES(
         CURRENT_TIMESTAMP,
-        :hw_id,
-        :app_id,
-        :room_id,
-        :total_users,
-        :room_users,
-        :version,
-        :platform
+        %(hw_id)s,
+        %(room_id)s,
+        %(total_users)s,
+        %(room_users)s,
+        %(version)s,
+        %(platform)s
     );
     """, data)
     return {'success': True}
 
 
-@router.get('/get_user_count')
-def get_user_count(app_id: str = None, hours: float = 24) -> list:
+@router.get('/get_user_count', tags=["User Count"])
+def get_user_count(hours: float = 24):
     values = db.query("""
-        SELECT timestamp, total_users 
-        FROM `UserCount`
-        WHERE app_id = :app_id AND 
-        timestamp > datetime('now', '-""" + str(hours) + """ Hour');
-    """, {"app_id": app_id})
+    SELECT timestamp, total_users 
+    FROM `UserCount`
+    WHERE TIMESTAMP > DATE_SUB(NOW(), INTERVAL """ + str(hours) + """ HOUR);
+    """)
     return values

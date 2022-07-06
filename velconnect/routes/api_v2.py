@@ -50,6 +50,10 @@ async def read_root():
 def get_all_devices():
     """Returns a list of all devices and details associated with them."""
     values = db.query("SELECT * FROM `Device`;")
+    values = [dict(v) for v in values]
+    for device in values:
+        if 'data' in device and len(device['data']) > 0:
+            device['data'] = json.loads(device['data'])
     return values
 
 

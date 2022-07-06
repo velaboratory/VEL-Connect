@@ -166,7 +166,7 @@ namespace VELConnect
 					{ "version", Application.version },
 					{ "platform", SystemInfo.operatingSystem },
 				};
-				PostRequestCallback(velConnectUrl + "/api/update_user_count", JsonConvert.SerializeObject(postData));
+				PostRequestCallback(velConnectUrl + "/api/v2/update_user_count", JsonConvert.SerializeObject(postData));
 			});
 		}
 
