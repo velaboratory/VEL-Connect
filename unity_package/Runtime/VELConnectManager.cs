@@ -128,7 +128,7 @@ namespace VELConnect
 		// Start is called before the first frame update
 		private void Start()
 		{
-			SetDeviceBaseData(new Dictionary<string, object>
+			SetDeviceField(new Dictionary<string, object>
 			{
 				{ "current_app", Application.productName },
 				{ "pairing_code", PairingCode }
@@ -141,7 +141,7 @@ namespace VELConnect
 
 			VelNetManager.OnJoinedRoom += room =>
 			{
-				SetDeviceBaseData(new Dictionary<string, object>
+				SetDeviceField(new Dictionary<string, object>
 				{
 					{ "current_app", Application.productName },
 					{ "current_room", room },
@@ -463,11 +463,11 @@ namespace VELConnect
 		/// <summary>
 		/// Sets data on the device keys themselves
 		/// </summary>
-		public static void SetDeviceBaseData(Dictionary<string, object> data)
+		public static void SetDeviceField(Dictionary<string, object> device)
 		{
 			instance.PostRequestCallback(
 				instance.velConnectUrl + "/api/v2/device/set_data/" + DeviceId,
-				JsonConvert.SerializeObject(data),
+				JsonConvert.SerializeObject(device),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
 		}

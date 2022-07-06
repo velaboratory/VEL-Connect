@@ -1,5 +1,7 @@
+import fastapi
 from fastapi import APIRouter
 from fastapi.responses import FileResponse
+from fastapi.templating import Jinja2Templates
 
 # APIRouter creates path operations for user module
 router = APIRouter(
@@ -7,6 +9,8 @@ router = APIRouter(
     tags=["Website"],
     include_in_schema=False
 )
+
+templates = Jinja2Templates(directory="templates")
 
 
 @router.get('/')
@@ -27,3 +31,8 @@ def success():
 @router.get('/failure')
 def failure():
     return FileResponse("templates/failure.html")
+
+
+@router.get('/join/{app_id}/{link}')
+def join(request: fastapi.Request, app_id: str, link: str):
+    return templates.TemplateResponse("join.html", {"request": request, "app_id": app_id, "link": link})
