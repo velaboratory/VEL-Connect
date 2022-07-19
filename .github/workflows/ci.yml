@@ -1,19 +1,21 @@
-name: CI
+name: Publish to Verdaccio
 on:
   push:
     branches:
-    - main
+    - master
 jobs:
-  split-upm:
-    name: split upm branch
+  publish-npm:
+    name: publish to npm.ugavel.com
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
-    - name: split upm branch
-      run: |
-        git subtree split -P "$PKG_ROOT" -b upm
-        git push -u origin upm
-      env:
-        PKG_ROOT: unity_package
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: http://npm.ugavel.com/
+      - name: actually publish
+        run: |
+          cd unity_package
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.VERDACCIO_TOKEN}}

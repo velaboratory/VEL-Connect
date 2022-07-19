@@ -27,7 +27,7 @@ post_user_count_example = {
 }
 
 
-@router.post('/update_user_count', tags=["User Count"])
+@router.post('/update_user_count')
 def update_user_count(data: dict):
     db.insert("""
     REPLACE INTO `UserCount`
@@ -44,7 +44,7 @@ def update_user_count(data: dict):
     return {'success': True}
 
 
-@router.get('/get_user_count', tags=["User Count"])
+@router.get('/get_user_count')
 def get_user_count(hours: float = 24):
     values = db.query("""
     SELECT timestamp, total_users 
