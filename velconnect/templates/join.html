@@ -54,7 +54,7 @@
     <div id="headset_details" style="display: none;">
         <div class="panel card">
             <div class="card-image">
-                <img class="img-responsive" src="/static/img/mini_landscape.png" alt="conVRged Logo">
+                <img id="cover_image" class="img-responsive" src="/static/img/cover_default.png">
             </div>
             <div class="panel-header text-center">
                 <figure class="avatar avatar-lg" style="background: none;"><img
@@ -104,7 +104,7 @@
 
                 <div class="divider text-center" data-content="Join Link"></div>
 
-                <div style="display: none;"  class="text-center" id="join_success">
+                <div style="display: none;" class="text-center" id="join_success">
                     <h2>Success!</h2>
 
                     <p>Your device will now join the room <strong>{{ link }}</strong> when you launch {{ app_id }}.</p>
@@ -147,6 +147,8 @@
         let hw_id = getCookie('hw_id');
 
         if (hw_id !== "" && hw_id !== undefined && hw_id !== "undefined") {
+
+            document.getElementById('cover_image').src = `/static/img/cover_{{app_id}}.png`
 
             setDeviceData({
                 "join_room_request_{{app_id}}": "{{link}}"

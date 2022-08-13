@@ -50,7 +50,7 @@ async def read_root():
         default-schema-tab = 'example'
         > 
         <div slot="nav-logo" style="display: flex; align-items: center; justify-content: center;"> 
-          <img src = "http://velconnect.ugavel.com/static/favicons/android-chrome-256x256.png" style="width:10em; margin: auto;" />
+          <img src = "/static/img/velconnect_logo_1.png" style="width:10em; margin: 2em auto;" />
         </div>
       </rapi-doc>
     </body>

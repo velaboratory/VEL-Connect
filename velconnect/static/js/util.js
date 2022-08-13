@@ -1,9 +1,8 @@
-
 function httpGetAsync(theUrl, callback, failCallback) {
-    var xmlHttp = new XMLHttpRequest();
+    const xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4) {
-            if (xmlHttp.status == 200) {
+        if (xmlHttp.readyState === 4) {
+            if (xmlHttp.status === 200) {
                 callback(xmlHttp.responseText);
             } else {
                 failCallback(xmlHttp.status);
@@ -16,7 +15,7 @@ function httpGetAsync(theUrl, callback, failCallback) {
 
 
 function httpPostAsync(theUrl, data, callback, failCallback) {
-    var xmlHttp = new XMLHttpRequest();
+    const xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState === 4) {
             if (xmlHttp.status === 200) {
@@ -45,10 +44,10 @@ function getCookie(cname) {
     let ca = decodedCookie.split(';');
     for (let i = 0; i < ca.length; i++) {
         let c = ca[i];
-        while (c.charAt(0) == ' ') {
+        while (c.charAt(0) === ' ') {
             c = c.substring(1);
         }
-        if (c.indexOf(name) == 0) {
+        if (c.indexOf(name) === 0) {
             return c.substring(name.length, c.length);
         }
     }
@@ -56,7 +55,7 @@ function getCookie(cname) {
 }
 
 function writeClass(className, data) {
-    if (data == undefined || data == null || data.toString() == 'undefined') {
+    if (data === undefined || data == null || data.toString() === 'undefined') {
         data = "";
     }
 
@@ -67,7 +66,7 @@ function writeClass(className, data) {
 }
 
 function writeId(idName, data) {
-    if (data == undefined || data == null || data.toString() == 'undefined') {
+    if (data === undefined || data == null || data.toString() === 'undefined') {
         data = "";
     }
 
@@ -75,7 +74,7 @@ function writeId(idName, data) {
 }
 
 function writeValue(className, data) {
-    if (data == undefined || data == null || data.toString() == 'undefined') {
+    if (data === undefined || data == null || data.toString() === 'undefined') {
         data = "";
     }
 
@@ -87,7 +86,7 @@ function writeValue(className, data) {
 
 
 function writeSrc(className, data) {
-    if (data == undefined || data == null || data.toString() == 'undefined') {
+    if (data === undefined || data == null || data.toString() === 'undefined') {
         data = "";
     }
 
@@ -132,23 +131,38 @@ function timeSinceString(date) {
     let interval = seconds / 31536000;
 
     if (interval > 1) {
-        return Math.floor(interval) + " years";
+        let val = Math.floor(interval);
+        let ret = val + " year";
+        if (val !== 1) ret += "s";
+        return ret;
     }
     interval = seconds / 2592000;
     if (interval > 1) {
-        return Math.floor(interval) + " months";
+        let val = Math.floor(interval);
+        let ret = val + " month";
+        if (val !== 1) ret += "s";
+        return ret;
     }
     interval = seconds / 86400;
     if (interval > 1) {
-        return Math.floor(interval) + " days";
+        let val = Math.floor(interval);
+        let ret = val + " day";
+        if (val !== 1) ret += "s";
+        return ret;
     }
     interval = seconds / 3600;
     if (interval > 1) {
-        return Math.floor(interval) + " hours";
+        let val = Math.floor(interval);
+        let ret = val + " hour";
+        if (val !== 1) ret += "s";
+        return ret;
     }
     interval = seconds / 60;
     if (interval > 1) {
-        return Math.floor(interval) + " minutes";
+        let val = Math.floor(interval);
+        let ret = val + " minute";
+        if (val !== 1) ret += "s";
+        return ret;
     }
     return Math.floor(seconds) + " seconds";
 }
