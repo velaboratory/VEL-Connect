@@ -1,4 +1,4 @@
-<html>
+<html lang="en">
 
 <head>
 
@@ -38,6 +38,11 @@
             user-select: auto;
         }
 
+        #submit_pairing_code {
+            cursor: pointer;
+            user-select: unset;
+        }
+
         .centered {
             margin: auto;
         }
@@ -54,7 +59,7 @@
 
     <div class="card">
         <div class="card-image">
-            <img src="/static/img/pair_code_screenshot.png" class="img-responsive">
+            <img src="/static/img/pair_code_screenshot.png" class="img-responsive" alt="Pairing code location">
         </div>
         <div class="card-header">
             <div class="card-title h5">Enter Pairing Code</div>
@@ -64,28 +69,31 @@
             You can find the code in the bottom left of your menu tablet in conVRged.
         </div>
         <div class="card-footer centered">
-            <input class="btn" type="text" id="pair_code" placeholder="0000">
-            <button class="btn btn-primary" id="submit_pairing_code">Submit</button>
+            <form onsubmit="submitCode()">
+                <label for="pair_code"></label><input class="btn" type="text" id="pair_code" placeholder="0000">
+                <input class="btn btn-primary" id="submit_pairing_code" type="submit" value="Submit"/>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
 
-    let submit_button = document.getElementById('submit_pairing_code');
-    let pair_code_input = document.getElementById('pair_code');
-    submit_button.addEventListener('click', () => {
-        httpGetAsync('/api/v2/get_device_by_pairing_code/' + pair_code_input.value, (resp) => {
+    const pair_code_input = document.getElementById('pair_code');
+
+    function submitCode() {
+        fetch('/api/v2/get_device_by_pairing_code/' + pair_code_input.value).then(resp => resp.json()).then(resp => {
             console.log(resp);
             let respData = JSON.parse(resp);
             if (respData['hw_id'] !== '') {
                 setCookie('hw_id', respData['hw_id'], 60);
                 window.location.href = "/";
             }
-        }, (status) => {
+        }).catch(e => {
             window.location.href = "/failure";
+            console.error(e);
         });
-    });
+    }
 </script>
 </body>
 
