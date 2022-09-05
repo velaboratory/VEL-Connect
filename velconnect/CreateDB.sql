@@ -20,10 +20,12 @@ CREATE TABLE `UserCount` (
     PRIMARY KEY (`timestamp`, `hw_id`)
 );
 CREATE TABLE `User` (
-    -- TODO user is defined by uuid, to which an email can be added without having to migrate.
+    -- user is defined by uuid, to which an email can be added without having to migrate.
     -- then the data that is coming from a user vs device is constant
+    -- UUID
+    `id` TEXT NOT NULL PRIMARY KEY,
     -- the user's email
-    `email` TEXT NOT NULL PRIMARY KEY,
+    `email` TEXT,
     `username` TEXT,
     -- the first time this device was seen
     `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -33,20 +35,21 @@ CREATE TABLE `User` (
     `data` TEXT
 );
 CREATE TABLE `UserDevice` (
-    -- Unique identifier for the device
-    `hw_id` TEXT NOT NULL,
-    -- the user's email
-    `email` TEXT NOT NULL,
+    -- the user account's uuid
+    `user_id` TEXT NOT NULL,
+    -- identifier for the device
+    -- This is unique because a device can have only one owner
+    `hw_id` TEXT NOT NULL UNIQUE,
     -- when this connection was created
     `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`hw_id`, `email`)
+    PRIMARY KEY (`user_id`, `hw_id`)
 );
 CREATE TABLE `Device` (
     -- Unique identifier for this device
     `hw_id` TEXT NOT NULL PRIMARY KEY,
     -- info about the hardware. Would specify Quest or Windows for example
     `os_info` TEXT,
-    -- A human-readable name for this device. Could be a username
+    -- A human-readable name for this device. Not a username for the game
     `friendly_name` TEXT,
     -- The last source to change this object. Generally this is the device id
     `modified_by` TEXT,
@@ -66,7 +69,11 @@ CREATE TABLE `Device` (
 
 CREATE TABLE `DataBlock` (
     -- Could be randomly generated. For room data, this is 'appId_roomName'
-    `id` TEXT NOT NULL PRIMARY KEY,
+    `id` TEXT NOT NULL,
+    -- id of the owner of this file. Ownership is not transferable because ids may collide,
+    -- but the owner could be null for global scope
+    `owner_id` TEXT,
+    `visibility` ENUM('public', 'private', 'unlisted') NOT NULL DEFAULT 'public',
     -- This is an indexable field to filter out different types of datablocks
     `category` TEXT,
     `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -76,5 +83,6 @@ CREATE TABLE `DataBlock` (
     -- the last time this data was fetched individually
     `last_accessed` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     -- JSON containing arbitrary data
-    `data` TEXT
+    `data` TEXT,
+    PRIMARY KEY (`id`, `owner_id`)
 );

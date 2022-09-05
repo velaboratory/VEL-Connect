@@ -2,10 +2,12 @@ import secrets
 import json
 import string
 import aiofiles
+import uuid
 
 import fastapi
-from fastapi.responses import HTMLResponse
-from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi import FastAPI, File, UploadFile, Response, Request, status
+from enum import Enum
 
 import db
 
@@ -47,7 +49,7 @@ async def read_root():
 """
 
 
-def parse_device(device: dict):
+def parse_data(device: dict):
     if 'data' in device and device['data'] is not None and len(device['data']) > 0:
         device['data'] = json.loads(device['data'])
 
@@ -58,19 +60,56 @@ def get_all_devices():
     values = db.query("SELECT * FROM `Device`;")
     values = [dict(v) for v in values]
     for device in values:
-        parse_device(device)
+        parse_data(device)
     return values
+
+
+@router.get('/get_user_by_pairing_code/{pairing_code}')
+def get_user_by_pairing_code(pairing_code: str):
+    device = get_device_by_pairing_code_dict(pairing_code)
+    if device is not None:
+        return device
+    return {'error': 'Not found'}, 400
 
 
 @router.get('/get_device_by_pairing_code/{pairing_code}')
 def get_device_by_pairing_code(pairing_code: str):
-    values = db.query("SELECT * FROM `Device` WHERE `pairing_code`=:pairing_code;",
-                      {'pairing_code': pairing_code})
-    if len(values) == 1:
-        device = dict(values[0])
-        parse_device(device)
+    device = get_device_by_pairing_code_dict(pairing_code)
+    if device is not None:
         return device
     return {'error': 'Not found'}, 400
+
+
+def get_device_by_pairing_code_dict(pairing_code: str) -> dict | None:
+    values = db.query("SELECT * FROM `Device` WHERE `pairing_code`=:pairing_code;", {'pairing_code': pairing_code})
+    if len(values) == 1:
+        device = dict(values[0])
+        parse_data(device)
+        return device
+    return None
+
+
+def get_user_for_device(hw_id: str) -> dict:
+    values = db.query("""SELECT * FROM `UserDevice` WHERE `hw_id`=:hw_id;""", {'hw_id': hw_id})
+    if len(values) == 1:
+        user = dict(values[0])
+        parse_data(user)
+        return user
+    # create new user instead
+    else:
+        user = create_user(hw_id)
+
+
+# creates a user with a device autoattached
+def create_user(hw_id: str) -> dict | None:
+    user_id = uuid.uuid4()
+    if not db.insert("""INSERT INTO `User`(id) VALUES (:user_id);
+        """, {'user_id': user_id}):
+        return None
+    if not db.insert("""INSERT INTO `UserDevice`(user_id, hw_id) VALUES (:user_id, :hw_id);
+            """, {'user_id': user_id, 'hw_id': hw_id}):
+        return None
+    return get_user_for_device(hw_id)
 
 
 def create_device(hw_id: str):
@@ -166,16 +205,22 @@ def generate_id(length: int = 4) -> str:
         secrets.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for i in range(length))
 
 
+class Visibility(str, Enum):
+    public = "public"
+    private = "private"
+    unlisted = "unlisted"
+
+
 @router.post('/set_data')
-def set_data_with_random_key(request: fastapi.Request, data: dict, modified_by: str = None,
-                             category: str = None) -> dict:
+def set_data_with_random_key(request: fastapi.Request, data: dict, owner: str, modified_by: str = None,
+                             category: str = None, visibility: Visibility = Visibility.public) -> dict:
     """Creates a little storage bucket for arbitrary data with a random key"""
-    return set_data(request, data, None, modified_by, category)
+    return set_data(request, data, None, owner, modified_by, category, visibility)
 
 
 @router.post('/set_data/{key}')
-def set_data(request: fastapi.Request, data: dict, key: str = None, modified_by: str = None,
-             category: str = None) -> dict:
+def set_data(request: fastapi.Request, data: dict, key: str = None, owner: str = None, modified_by: str = None,
+             category: str = None, visibility: Visibility = Visibility.public) -> dict:
     """Creates a little storage bucket for arbitrary data"""
 
     # add the client's IP address if no sender specified
@@ -213,7 +258,7 @@ def set_data(request: fastapi.Request, data: dict, key: str = None, modified_by:
 
 
 @router.get('/get_data/{key}')
-def get_data(key: str) -> dict:
+def get_data(response: Response, key: str, user_id: str = None) -> dict:
     """Gets data from a storage bucket for arbitrary data"""
 
     data = db.query("""
@@ -233,18 +278,73 @@ def get_data(key: str) -> dict:
             block = dict(data[0])
             if 'data' in block and block['data'] is not None:
                 block['data'] = json.loads(block['data'])
+            if not has_permission(block, user_id):
+                response.status_code = status.HTTP_401_UNAUTHORIZED
+                return {'error': 'Not authorized to see that data.'}
+            replace_userid_with_name(block)
             return block
+        response.status_code = status.HTTP_404_NOT_FOUND
         return {'error': 'Not found'}
     except Exception as e:
         print(e)
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {'error': 'Unknown. Maybe no data at this key.'}
 
 
+def has_permission(data_block: dict, user_uuid: str) -> bool:
+    # if the data is public by visibility
+    if data_block['visibility'] == Visibility.public or data_block['visibility'] == Visibility.unlisted:
+        return True
+    # public domain data
+    elif data_block['owner_id'] is None:
+        return True
+    # if we are the owner
+    elif data_block['owner_id'] == user_uuid:
+        return True
+    else:
+        return False
+
+
+def replace_userid_with_name(data_block: dict):
+    if data_block['owner_id'] is not None:
+        user = get_user_dict(data_block['owner_id'])
+        data_block['owner_name'] = user['username']
+    del data_block['owner_id']
+
+
+@router.get('/user/get_data/{user_id}')
+def get_user(response: Response, user_id: str):
+    user = get_user_dict(user_id)
+    if user is None:
+        response.status_code = status.HTTP_404_BAD_REQUEST
+        return {"error": "User not found"}
+    return user
+
+
+def get_user_dict(user_id: str) -> dict | None:
+    values = db.query("SELECT * FROM `User` WHERE `id`=:user_id;", {'user_id': user_id})
+    if len(values) == 1:
+        user = dict(values[0])
+        parse_data(user)
+        return user
+    return None
+
+
 @router.post("/upload_file/{key}")
-async def upload_file(request: fastapi.Request, file: UploadFile, key: str,modified_by: str = None):
+async def upload_file(request: fastapi.Request, file: UploadFile, key: str, modified_by: str = None):
     async with aiofiles.open('data/' + key, 'wb') as out_file:
         content = await file.read()  # async read
         await out_file.write(content)  # async write
     # add a datablock to link to the file
-    set_data(request, {'filename': file.filename}, key, 'file')
+    set_data(request, {'filename': file.filename}, key, 'file', modified_by)
     return {"filename": file.filename}
+
+
+@router.get("/download_file/{key}")
+async def download_file(key: str):
+    # get the relevant datablock
+    data = get_data(key)
+    print(data)
+    if data['category'] != 'file':
+        return 'Not a file', 500
+    return fastapi.FileResponse(data['data']['filename'])
