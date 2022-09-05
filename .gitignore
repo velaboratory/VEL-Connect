@@ -13,3 +13,4 @@ env_win/
 velconnect.db
 velconnect*.db
 .idea/
+velconnect/data/

@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -69,7 +70,7 @@
             You can find the code in the bottom left of your menu tablet in conVRged.
         </div>
         <div class="card-footer centered">
-            <form onsubmit="submitCode()">
+            <form id="pair_form">
                 <label for="pair_code"></label><input class="btn" type="text" id="pair_code" placeholder="0000">
                 <input class="btn btn-primary" id="submit_pairing_code" type="submit" value="Submit"/>
             </form>
@@ -81,18 +82,28 @@
 
     const pair_code_input = document.getElementById('pair_code');
 
-    function submitCode() {
-        fetch('/api/v2/get_device_by_pairing_code/' + pair_code_input.value).then(resp => resp.json()).then(resp => {
-            console.log(resp);
-            let respData = JSON.parse(resp);
-            if (respData['hw_id'] !== '') {
-                setCookie('hw_id', respData['hw_id'], 60);
-                window.location.href = "/";
-            }
-        }).catch(e => {
+    document.getElementById('pair_form').addEventListener('submit', submitCode, true);
+
+    function submitCode(event) {
+        fetch('/api/get_device_by_pairing_code/' + pair_code_input.value)
+            .then(resp => resp.json())
+            .then(resp => {
+                if (resp.length === 2 && resp[1] === 400) {
+                    window.location.href = "/failure?code=1";
+                    console.error(resp);
+                } else {
+                    let respData = JSON.parse(resp);
+                    if (respData['hw_id'] !== '') {
+                        setCookie('hw_id', respData['hw_id'], 60);
+                        window.location.href = "/";
+                    }
+                }
+            }).catch(e => {
             window.location.href = "/failure";
             console.error(e);
         });
+        event.preventDefault();
+        return false;
     }
 </script>
 </body>

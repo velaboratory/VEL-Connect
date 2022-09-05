@@ -1,6 +1,6 @@
 function setDeviceField(device) {
     let hw_id = getCookie('hw_id');
-    fetch('/api/v2/device/set_data/' + hw_id, {
+    fetch('/api/device/set_data/' + hw_id, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -15,7 +15,7 @@ function setDeviceField(device) {
 
 function setDeviceData(data, successCallback, failureCallback) {
     let hw_id = getCookie('hw_id');
-    fetch('/api/v2/device/set_data/' + hw_id, {
+    fetch('/api/device/set_data/' + hw_id, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',
@@ -35,7 +35,7 @@ function setDeviceData(data, successCallback, failureCallback) {
 }
 
 function setRoomData(data) {
-    fetch('/api/v2/set_data/' + current_app.value + "_" + current_room.value, {
+    fetch('/api/set_data/' + current_app.value + "_" + current_room.value, {
         method: 'POST',
         headers: {
             'Accept': 'application/json',

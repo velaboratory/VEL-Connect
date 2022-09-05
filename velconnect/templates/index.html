@@ -259,7 +259,7 @@
 
         if (hw_id !== "" && hw_id !== undefined && hw_id !== "undefined") {
 
-            httpGetAsync('/api/v2/device/get_data/' + hw_id, (resp) => {
+            httpGetAsync('/api/device/get_data/' + hw_id, (resp) => {
                 console.log(resp);
                 let respData = JSON.parse(resp);
 
@@ -309,7 +309,7 @@
 
 
             function setDeviceField(data) {
-                fetch('/api/v2/device/set_data/' + hw_id, {
+                fetch('/api/device/set_data/' + hw_id, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -323,7 +323,7 @@
             }
 
             function setDeviceData(data) {
-                fetch('/api/v2/device/set_data/' + hw_id, {
+                fetch('/api/device/set_data/' + hw_id, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
@@ -337,7 +337,7 @@
             }
 
             function setRoomData(data) {
-                fetch('/api/v2/set_data/' + current_app.value + "_" + current_room.value, {
+                fetch('/api/set_data/' + current_app.value + "_" + current_room.value, {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',

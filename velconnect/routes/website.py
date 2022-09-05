@@ -29,8 +29,8 @@ def success():
 
 
 @router.get('/failure')
-def failure():
-    return FileResponse("templates/failure.html")
+def failure(request: fastapi.Request, code: int = 0):
+    return templates.TemplateResponse("failure.html", {"request": request, "code": code})
 
 
 @router.get('/join/{app_id}/{link}')

@@ -4,7 +4,7 @@
 
     if (hw_id !== "" && hw_id !== undefined && hw_id !== "undefined") {
 
-        httpGetAsync('/api/v2/device/get_data/' + hw_id, (resp) => {
+        httpGetAsync('/api/device/get_data/' + hw_id, (resp) => {
             console.log(resp);
             let respData = JSON.parse(resp);
 

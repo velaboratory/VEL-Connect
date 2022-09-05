@@ -19,6 +19,28 @@ CREATE TABLE `UserCount` (
     `platform` VARCHAR(64),
     PRIMARY KEY (`timestamp`, `hw_id`)
 );
+CREATE TABLE `User` (
+    -- TODO user is defined by uuid, to which an email can be added without having to migrate.
+    -- then the data that is coming from a user vs device is constant
+    -- the user's email
+    `email` TEXT NOT NULL PRIMARY KEY,
+    `username` TEXT,
+    -- the first time this device was seen
+    `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- the last time this device data was modified
+    `last_modified` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    -- JSON containing arbitrary data
+    `data` TEXT
+);
+CREATE TABLE `UserDevice` (
+    -- Unique identifier for the device
+    `hw_id` TEXT NOT NULL,
+    -- the user's email
+    `email` TEXT NOT NULL,
+    -- when this connection was created
+    `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`hw_id`, `email`)
+);
 CREATE TABLE `Device` (
     -- Unique identifier for this device
     `hw_id` TEXT NOT NULL PRIMARY KEY,
