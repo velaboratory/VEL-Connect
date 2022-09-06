@@ -18,6 +18,15 @@ namespace VELConnect
 
 		public class State
 		{
+			public class User
+			{
+				public string id;
+				public string email;
+				public string username;
+				public string date_created;
+				public string last_modified;
+				public Dictionary<string, string> data;
+			}
 			public class Device
 			{
 				public string hw_id;
@@ -62,6 +71,7 @@ namespace VELConnect
 				}
 			}
 
+			public User user;
 			public Device device;
 			public RoomState room;
 		}
@@ -73,9 +83,14 @@ namespace VELConnect
 		public static Action<string, string> OnDeviceDataChanged;
 		public static Action<string, string> OnRoomDataChanged;
 
-		private static readonly Dictionary<string, List<CallbackListener>> deviceFieldCallbacks = new Dictionary<string, List<CallbackListener>>();
-		private static readonly Dictionary<string, List<CallbackListener>> deviceDataCallbacks = new Dictionary<string, List<CallbackListener>>();
-		private static readonly Dictionary<string, List<CallbackListener>> roomDataCallbacks = new Dictionary<string, List<CallbackListener>>();
+		private static readonly Dictionary<string, List<CallbackListener>> deviceFieldCallbacks =
+			new Dictionary<string, List<CallbackListener>>();
+
+		private static readonly Dictionary<string, List<CallbackListener>> deviceDataCallbacks =
+			new Dictionary<string, List<CallbackListener>>();
+
+		private static readonly Dictionary<string, List<CallbackListener>> roomDataCallbacks =
+			new Dictionary<string, List<CallbackListener>>();
 
 		private struct CallbackListener
 		{
@@ -166,7 +181,7 @@ namespace VELConnect
 					{ "version", Application.version },
 					{ "platform", SystemInfo.operatingSystem },
 				};
-				PostRequestCallback(velConnectUrl + "/api/v2/update_user_count", JsonConvert.SerializeObject(postData));
+				PostRequestCallback(velConnectUrl + "/api/update_user_count", JsonConvert.SerializeObject(postData));
 			});
 		}
 
@@ -176,7 +191,7 @@ namespace VELConnect
 			{
 				try
 				{
-					GetRequestCallback(velConnectUrl + "/api/v2/device/get_data/" + DeviceId, json =>
+					GetRequestCallback(velConnectUrl + "/api/device/get_data/" + DeviceId, json =>
 					{
 						State state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
@@ -208,7 +223,9 @@ namespace VELConnect
 							foreach (FieldInfo fieldInfo in fields)
 							{
 								string newValue = fieldInfo.GetValue(state.device) as string;
-								string oldValue = lastState != null ? fieldInfo.GetValue(lastState.device) as string : null;
+								string oldValue = lastState != null
+									? fieldInfo.GetValue(lastState.device) as string
+									: null;
 								if (newValue != oldValue)
 								{
 									try
@@ -348,7 +365,8 @@ namespace VELConnect
 		/// <summary>
 		/// Adds a change listener callback to a particular field name within the Device main fields.
 		/// </summary>
-		public static void AddDeviceFieldListener(string key, MonoBehaviour keepAliveObject, Action<string> callback, bool sendInitialState = false)
+		public static void AddDeviceFieldListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
+			bool sendInitialState = false)
 		{
 			if (!deviceFieldCallbacks.ContainsKey(key))
 			{
@@ -366,7 +384,8 @@ namespace VELConnect
 			{
 				if (instance != null && instance.lastState?.device != null)
 				{
-					if (instance.lastState.device.GetType().GetField(key)?.GetValue(instance.lastState.device) is string val)
+					if (instance.lastState.device.GetType().GetField(key)
+						    ?.GetValue(instance.lastState.device) is string val)
 					{
 						try
 						{
@@ -384,7 +403,8 @@ namespace VELConnect
 		/// <summary>
 		/// Adds a change listener callback to a particular field name within the Device data JSON.
 		/// </summary>
-		public static void AddDeviceDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback, bool sendInitialState = false)
+		public static void AddDeviceDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
+			bool sendInitialState = false)
 		{
 			if (!deviceDataCallbacks.ContainsKey(key))
 			{
@@ -418,7 +438,8 @@ namespace VELConnect
 		/// <summary>
 		/// Adds a change listener callback to a particular field name within the Room data JSON.
 		/// </summary>
-		public static void AddRoomDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback, bool sendInitialState = false)
+		public static void AddRoomDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
+			bool sendInitialState = false)
 		{
 			if (!roomDataCallbacks.ContainsKey(key))
 			{
@@ -466,7 +487,7 @@ namespace VELConnect
 		public static void SetDeviceField(Dictionary<string, object> device)
 		{
 			instance.PostRequestCallback(
-				instance.velConnectUrl + "/api/v2/device/set_data/" + DeviceId,
+				instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
 				JsonConvert.SerializeObject(device),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
@@ -478,7 +499,7 @@ namespace VELConnect
 		public static void SetDeviceData(Dictionary<string, string> data)
 		{
 			instance.PostRequestCallback(
-				instance.velConnectUrl + "/api/v2/device/set_data/" + DeviceId,
+				instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
 				JsonConvert.SerializeObject(new Dictionary<string, object> { { "data", data } }),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
@@ -493,19 +514,21 @@ namespace VELConnect
 			}
 
 			instance.PostRequestCallback(
-				instance.velConnectUrl + "/api/v2/set_data/" + Application.productName + "_" + VelNetManager.Room,
+				instance.velConnectUrl + "/api/set_data/" + Application.productName + "_" + VelNetManager.Room,
 				JsonConvert.SerializeObject(data),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
 		}
 
 
-		public void GetRequestCallback(string url, Action<string> successCallback = null, Action<string> failureCallback = null)
+		public void GetRequestCallback(string url, Action<string> successCallback = null,
+			Action<string> failureCallback = null)
 		{
 			StartCoroutine(GetRequestCallbackCo(url, successCallback, failureCallback));
 		}
 
-		private IEnumerator GetRequestCallbackCo(string url, Action<string> successCallback = null, Action<string> failureCallback = null)
+		private IEnumerator GetRequestCallbackCo(string url, Action<string> successCallback = null,
+			Action<string> failureCallback = null)
 		{
 			using UnityWebRequest webRequest = UnityWebRequest.Get(url);
 			// Request and wait for the desired page.
@@ -516,7 +539,7 @@ namespace VELConnect
 				case UnityWebRequest.Result.ConnectionError:
 				case UnityWebRequest.Result.DataProcessingError:
 				case UnityWebRequest.Result.ProtocolError:
-					Debug.LogError(url + ": Error: " + webRequest.error);
+					Debug.LogError(url + ": Error: " + webRequest.error + "\n" + Environment.StackTrace);
 					failureCallback?.Invoke(webRequest.error);
 					break;
 				case UnityWebRequest.Result.Success:
@@ -525,13 +548,15 @@ namespace VELConnect
 			}
 		}
 
-		public void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null, Action<string> successCallback = null,
+		public void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null,
+			Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
 			StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
 		}
 
-		private static IEnumerator PostRequestCallbackCo(string url, string postData, Dictionary<string, string> headers = null, Action<string> successCallback = null,
+		private static IEnumerator PostRequestCallbackCo(string url, string postData,
+			Dictionary<string, string> headers = null, Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
 			UnityWebRequest webRequest = new UnityWebRequest(url, "POST");
@@ -554,7 +579,7 @@ namespace VELConnect
 				case UnityWebRequest.Result.ConnectionError:
 				case UnityWebRequest.Result.DataProcessingError:
 				case UnityWebRequest.Result.ProtocolError:
-					Debug.LogError(url + ": Error: " + webRequest.error);
+					Debug.LogError(url + ": Error: " + webRequest.error + "\n" + Environment.StackTrace);
 					failureCallback?.Invoke(webRequest.error);
 					break;
 				case UnityWebRequest.Result.Success:

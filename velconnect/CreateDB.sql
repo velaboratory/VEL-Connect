@@ -73,7 +73,7 @@ CREATE TABLE `DataBlock` (
     -- id of the owner of this file. Ownership is not transferable because ids may collide,
     -- but the owner could be null for global scope
     `owner_id` TEXT,
-    `visibility` ENUM('public', 'private', 'unlisted') NOT NULL DEFAULT 'public',
+    `visibility` TEXT CHECK( `visibility` IN ('public','private','unlisted') ) NOT NULL DEFAULT 'public',
     -- This is an indexable field to filter out different types of datablocks
     `category` TEXT,
     `date_created` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

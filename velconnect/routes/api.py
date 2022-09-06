@@ -54,6 +54,16 @@ def parse_data(device: dict):
         device['data'] = json.loads(device['data'])
 
 
+@router.get('/get_all_users')
+def get_all_users():
+    """Returns a list of all devices and details associated with them."""
+    values = db.query("SELECT * FROM `User`;")
+    values = [dict(v) for v in values]
+    for v in values:
+        parse_data(v)
+    return values
+
+
 @router.get('/get_all_devices')
 def get_all_devices():
     """Returns a list of all devices and details associated with them."""
@@ -92,22 +102,22 @@ def get_device_by_pairing_code_dict(pairing_code: str) -> dict | None:
 def get_user_for_device(hw_id: str) -> dict:
     values = db.query("""SELECT * FROM `UserDevice` WHERE `hw_id`=:hw_id;""", {'hw_id': hw_id})
     if len(values) == 1:
-        user = dict(values[0])
-        parse_data(user)
-        return user
-    # create new user instead
+        user_id = dict(values[0])['user_id']
+        user = get_user_dict(user_id=user_id)
     else:
+        # create new user instead
         user = create_user(hw_id)
+    parse_data(user)
+    return user
 
 
 # creates a user with a device autoattached
 def create_user(hw_id: str) -> dict | None:
-    user_id = uuid.uuid4()
-    if not db.insert("""INSERT INTO `User`(id) VALUES (:user_id);
-        """, {'user_id': user_id}):
+    user_id = str(uuid.uuid4())
+    if not db.insert("""INSERT INTO `User`(id) VALUES (:user_id);""", {'user_id': user_id}):
         return None
-    if not db.insert("""INSERT INTO `UserDevice`(user_id, hw_id) VALUES (:user_id, :hw_id);
-            """, {'user_id': user_id, 'hw_id': hw_id}):
+    if not db.insert("""INSERT INTO `UserDevice`(user_id, hw_id) VALUES (:user_id, :hw_id); """,
+                     {'user_id': user_id, 'hw_id': hw_id}):
         return None
     return get_user_for_device(hw_id)
 
@@ -119,26 +129,29 @@ def create_device(hw_id: str):
 
 
 @router.get('/device/get_data/{hw_id}')
-def get_state(request: fastapi.Request, hw_id: str):
+def get_state(request: Request, response: Response, hw_id: str):
     """Gets the device state"""
 
     devices = db.query("""
     SELECT * FROM `Device` WHERE `hw_id`=:hw_id;
     """, {'hw_id': hw_id})
     if len(devices) == 0:
+        response.status_code = status.HTTP_404_NOT_FOUND
         return {'error': "Can't find device with that id."}
     block = dict(devices[0])
     if 'data' in block and block['data'] is not None:
         block['data'] = json.loads(block['data'])
 
+    user = get_user_for_device(hw_id)
+
     room_key: str = f"{devices[0]['current_app']}_{devices[0]['current_room']}"
-    room_data = get_data(room_key)
+    room_data = get_data(response, key=room_key, user_id=user['id'])
 
     if "error" in room_data:
         set_data(request, data={}, key=room_key, modified_by=None, category="room")
-        room_data = get_data(room_key)
+        room_data = get_data(response, key=room_key, user_id=user['id'])
 
-    return {'device': block, 'room': room_data}
+    return {'device': block, 'room': room_data, 'user': user}
 
 
 @router.post('/device/set_data/{hw_id}')
