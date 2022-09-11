@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -14,7 +16,8 @@ namespace VELConnect
 	public class VELConnectManager : MonoBehaviour
 	{
 		public string velConnectUrl = "http://localhost";
-		private static VELConnectManager instance;
+		public static string VelConnectUrl => _instance.velConnectUrl;
+		private static VELConnectManager _instance;
 
 		public class State
 		{
@@ -27,6 +30,7 @@ namespace VELConnect
 				public string last_modified;
 				public Dictionary<string, string> data;
 			}
+
 			public class Device
 			{
 				public string hw_id;
@@ -136,8 +140,8 @@ namespace VELConnect
 
 		private void Awake()
 		{
-			if (instance != null) Debug.LogError("VELConnectManager instance already exists", this);
-			instance = this;
+			if (_instance != null) Debug.LogError("VELConnectManager instance already exists", this);
+			_instance = this;
 		}
 
 		// Start is called before the first frame update
@@ -382,10 +386,10 @@ namespace VELConnect
 
 			if (sendInitialState)
 			{
-				if (instance != null && instance.lastState?.device != null)
+				if (_instance != null && _instance.lastState?.device != null)
 				{
-					if (instance.lastState.device.GetType().GetField(key)
-						    ?.GetValue(instance.lastState.device) is string val)
+					if (_instance.lastState.device.GetType().GetField(key)
+						    ?.GetValue(_instance.lastState.device) is string val)
 					{
 						try
 						{
@@ -472,12 +476,12 @@ namespace VELConnect
 
 		public static string GetDeviceData(string key)
 		{
-			return instance != null ? instance.lastState?.device?.TryGetData(key) : null;
+			return _instance != null ? _instance.lastState?.device?.TryGetData(key) : null;
 		}
 
 		public static string GetRoomData(string key)
 		{
-			return instance != null ? instance.lastState?.room?.TryGetData(key) : null;
+			return _instance != null ? _instance.lastState?.room?.TryGetData(key) : null;
 		}
 
 
@@ -486,8 +490,8 @@ namespace VELConnect
 		/// </summary>
 		public static void SetDeviceField(Dictionary<string, object> device)
 		{
-			instance.PostRequestCallback(
-				instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
+			PostRequestCallback(
+				_instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
 				JsonConvert.SerializeObject(device),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
@@ -498,8 +502,8 @@ namespace VELConnect
 		/// </summary>
 		public static void SetDeviceData(Dictionary<string, string> data)
 		{
-			instance.PostRequestCallback(
-				instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
+			PostRequestCallback(
+				_instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
 				JsonConvert.SerializeObject(new Dictionary<string, object> { { "data", data } }),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
@@ -513,18 +517,34 @@ namespace VELConnect
 				return;
 			}
 
-			instance.PostRequestCallback(
-				instance.velConnectUrl + "/api/set_data/" + Application.productName + "_" + VelNetManager.Room,
+			PostRequestCallback(
+				_instance.velConnectUrl + "/api/set_data/" + Application.productName + "_" + VelNetManager.Room,
 				JsonConvert.SerializeObject(data),
 				new Dictionary<string, string> { { "modified_by", DeviceId } }
 			);
 		}
 
+		public static void UploadFile(string fileName, byte[] fileData, Action<string> successCallback = null)
+		{
+			MultipartFormDataContent requestContent = new MultipartFormDataContent();
+			ByteArrayContent fileContent = new ByteArrayContent(fileData);
 
-		public void GetRequestCallback(string url, Action<string> successCallback = null,
+			requestContent.Add(fileContent, "file", fileName);
+
+			Task.Run(async () =>
+			{
+				HttpResponseMessage r = await new HttpClient().PostAsync(_instance.velConnectUrl + "/api/upload_file", requestContent);
+				string resp = await r.Content.ReadAsStringAsync();
+				Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string,string>>(resp);
+				successCallback?.Invoke(dict["key"]);
+			});
+		}
+
+
+		public static void GetRequestCallback(string url, Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
-			StartCoroutine(GetRequestCallbackCo(url, successCallback, failureCallback));
+			_instance.StartCoroutine(_instance.GetRequestCallbackCo(url, successCallback, failureCallback));
 		}
 
 		private IEnumerator GetRequestCallbackCo(string url, Action<string> successCallback = null,
@@ -548,12 +568,13 @@ namespace VELConnect
 			}
 		}
 
-		public void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null,
+		public static void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null,
 			Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
-			StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
+			_instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
 		}
+
 
 		private static IEnumerator PostRequestCallbackCo(string url, string postData,
 			Dictionary<string, string> headers = null, Action<string> successCallback = null,

@@ -1,3 +1,4 @@
+import os
 import secrets
 import json
 import string
@@ -129,7 +130,7 @@ def create_device(hw_id: str):
 
 
 @router.get('/device/get_data/{hw_id}')
-def get_state(request: Request, response: Response, hw_id: str):
+def get_device_data(request: Request, response: Response, hw_id: str):
     """Gets the device state"""
 
     devices = db.query("""
@@ -155,7 +156,7 @@ def get_state(request: Request, response: Response, hw_id: str):
 
 
 @router.post('/device/set_data/{hw_id}')
-def set_state(request: fastapi.Request, hw_id: str, data: dict, modified_by: str = None):
+def set_device_data(request: fastapi.Request, hw_id: str, data: dict, modified_by: str = None):
     """Sets the device state"""
 
     create_device(hw_id)
@@ -343,21 +344,53 @@ def get_user_dict(user_id: str) -> dict | None:
     return None
 
 
+@router.post("/upload_file")
+async def upload_file_with_random_key(request: fastapi.Request, file: UploadFile, modified_by: str = None):
+    return await upload_file(request, file, None, modified_by)
+
+
 @router.post("/upload_file/{key}")
-async def upload_file(request: fastapi.Request, file: UploadFile, key: str, modified_by: str = None):
+async def upload_file(request: fastapi.Request, file: UploadFile, key: str | None, modified_by: str = None):
+    if not os.path.exists('data'):
+        os.makedirs('data')
+
+    # generates a key if none was supplied
+    if key is None:
+        key = generate_id()
+
+        # regenerate if necessary
+        while len(db.query("SELECT id FROM `DataBlock` WHERE id=:id;", {"id": key})) > 0:
+            key = generate_id()
+
     async with aiofiles.open('data/' + key, 'wb') as out_file:
         content = await file.read()  # async read
         await out_file.write(content)  # async write
     # add a datablock to link to the file
-    set_data(request, {'filename': file.filename}, key, 'file', modified_by)
-    return {"filename": file.filename}
+    set_data(request, data={'filename': file.filename}, key=key, category='file', modified_by=modified_by)
+    return {"filename": file.filename, 'key': key}
 
 
 @router.get("/download_file/{key}")
-async def download_file(key: str):
+async def download_file(response: Response, key: str):
     # get the relevant datablock
-    data = get_data(key)
+    data = get_data(response, key)
     print(data)
+    if response.status_code == status.HTTP_404_NOT_FOUND:
+        return 'Not found'
     if data['category'] != 'file':
-        return 'Not a file', 500
-    return fastapi.FileResponse(data['data']['filename'])
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return 'Not a file'
+    return FileResponse(path='data/' + key, filename=data['data']['filename'])
+
+
+@router.get("/get_all_files")
+async def get_all_files():
+    data = db.query("""
+        SELECT * 
+        FROM `DataBlock`
+        WHERE visibility='public' AND category='file';  
+        """)
+    data = [dict(f) for f in data]
+    for f in data:
+        parse_data(f)
+    return data
