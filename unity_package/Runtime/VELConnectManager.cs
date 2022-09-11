@@ -150,7 +150,8 @@ namespace VELConnect
 			SetDeviceField(new Dictionary<string, object>
 			{
 				{ "current_app", Application.productName },
-				{ "pairing_code", PairingCode }
+				{ "pairing_code", PairingCode },
+				{ "friendly_name", SystemInfo.deviceName },
 			});
 
 			UpdateUserCount();
@@ -533,11 +534,40 @@ namespace VELConnect
 
 			Task.Run(async () =>
 			{
-				HttpResponseMessage r = await new HttpClient().PostAsync(_instance.velConnectUrl + "/api/upload_file", requestContent);
+				HttpResponseMessage r =
+					await new HttpClient().PostAsync(_instance.velConnectUrl + "/api/upload_file", requestContent);
 				string resp = await r.Content.ReadAsStringAsync();
-				Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string,string>>(resp);
+				Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(resp);
 				successCallback?.Invoke(dict["key"]);
 			});
+		}
+
+
+		public static void DownloadFile(string key, Action<byte[]> successCallback = null)
+		{
+			_instance.StartCoroutine(_instance.DownloadFileCo(key, successCallback));
+		}
+
+		private IEnumerator DownloadFileCo(string key, Action<byte[]> successCallback = null)
+		{
+			UnityWebRequest www = new UnityWebRequest(velConnectUrl + "/api/download_file/" + key);
+			www.downloadHandler = new DownloadHandlerBuffer();
+			yield return www.SendWebRequest();
+
+			if (www.result != UnityWebRequest.Result.Success)
+			{
+				Debug.Log(www.error);
+			}
+			else
+			{
+				// Show results as text
+				Debug.Log(www.downloadHandler.text);
+
+				// Or retrieve results as binary data
+				byte[] results = www.downloadHandler.data;
+
+				successCallback?.Invoke(results);
+			}
 		}
 
 
