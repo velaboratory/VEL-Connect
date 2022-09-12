@@ -322,7 +322,8 @@ def has_permission(data_block: dict, user_uuid: str) -> bool:
 def replace_userid_with_name(data_block: dict):
     if data_block['owner_id'] is not None:
         user = get_user_dict(data_block['owner_id'])
-        data_block['owner_name'] = user['username']
+        if user is not None:
+            data_block['owner_name'] = user['username']
     del data_block['owner_id']
 
 
