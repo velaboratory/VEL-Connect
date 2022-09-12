@@ -394,3 +394,23 @@ async def get_all_files():
     for f in data:
         parse_data(f)
     return data
+
+
+@router.get("/get_all_images")
+async def get_all_images():
+    data = db.query("""
+        SELECT * 
+        FROM `DataBlock`
+        WHERE visibility='public' AND category='file';  
+        """)
+    data = [dict(f) for f in data]
+    for f in data:
+        parse_data(f)
+    images = []
+    for f in data:
+        if f['data']['filename'].endswith('.png') or f['data']['filename'].endswith('.jpg'):
+            images.append({
+                'key': f['id'],
+                'filename': f['data']['filename']
+            })
+    return images

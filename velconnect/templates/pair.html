@@ -92,9 +92,8 @@
                     window.location.href = "/failure?code=1";
                     console.error(resp);
                 } else {
-                    let respData = JSON.parse(resp);
-                    if (respData['hw_id'] !== '') {
-                        setCookie('hw_id', respData['hw_id'], 60);
+                    if (resp['hw_id'] !== '') {
+                        setCookie('hw_id', resp['hw_id'], 60);
                         window.location.href = "/";
                     }
                 }

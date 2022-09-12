@@ -162,6 +162,20 @@
 
 
                 <br>
+                <div class="tile tile-centered">
+                    <div class="tile-content">
+                        <div class="tile-title text-bold">Upload File</div>
+                        <input class="btn upload_file" type="file" id="upload_file">
+                        <button class="btn btn-primary btn-lg" id="upload_file_button">Upload
+                        </button>
+                    </div>
+                    <div class="tile-action">
+                    </div>
+                </div>
+                <br>
+
+
+                <br>
 
                 <div class="divider text-center" data-content="Room Settings"></div>
                 <div class="tile tile-centered">
@@ -185,18 +199,18 @@
                     </div>
                 </div>
                 <br>
-                <div class="tile tile-centered">
-                    <div class="tile-content">
-                        <div class="tile-title text-bold">Carpet Color</div>
-                        <input class="btn carpet_color coloris" type="text" id="carpet_color" placeholder="#ffffff">
-                        <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_carpet_color"
-                                data-tooltip="Set Carpet Color">Set
-                        </button>
-                    </div>
-                    <div class="tile-action">
-                    </div>
-                </div>
-                <br>
+                <!--                <div class="tile tile-centered">-->
+                <!--                    <div class="tile-content">-->
+                <!--                        <div class="tile-title text-bold">Carpet Color</div>-->
+                <!--                        <input class="btn carpet_color coloris" type="text" id="carpet_color" placeholder="#ffffff">-->
+                <!--                        <button class="btn btn-primary btn-lg tooltip tooltip-right" id="set_carpet_color"-->
+                <!--                                data-tooltip="Set Carpet Color">Set-->
+                <!--                        </button>-->
+                <!--                    </div>-->
+                <!--                    <div class="tile-action">-->
+                <!--                    </div>-->
+                <!--                </div>-->
+                <!--                <br>-->
 
                 <div class="divider text-center" data-content="Screen Sharing"></div>
 
@@ -252,6 +266,7 @@
         let set_tv_url = document.getElementById('set_tv_url');
         let set_carpet_color = document.getElementById('set_carpet_color');
         let set_avatar_url = document.getElementById('set_avatar_url');
+        let upload_file_button = document.getElementById('upload_file_button');
 
 
         // check cookie
@@ -349,6 +364,18 @@
                     .catch(_ => console.log('fail'));
             }
 
+
+            function uploadFile(file) {
+                let formData = new FormData();
+                formData.append("file", file);
+                fetch('/api/upload_file', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(_ => console.log('success'))
+                    .catch(_ => console.log('fail'));
+            }
+
             if (set_room_id) {
                 set_room_id.addEventListener('click', () => {
                     setDeviceField({"current_room": current_room.value});
@@ -377,6 +404,11 @@
             if (set_avatar_url) {
                 set_avatar_url.addEventListener('click', () => {
                     setDeviceData({"avatar_url": document.getElementById('avatar_url').value});
+                });
+            }
+            if (upload_file_button) {
+                upload_file_button.addEventListener('click', () => {
+                    uploadFile(document.getElementById('upload_file').files[0]);
                 });
             }
 
