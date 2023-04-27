@@ -17,6 +17,9 @@ origins = [
     "http://localhost:8080",
     "http://localhost:8000",
     "http://localhost:8005",
+    "http://localhost:5173",
+    "https://convrged.ugavel.com",
+    "http://convrged.ugavel.com",
 ]
 
 app.add_middleware(
