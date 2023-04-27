@@ -264,9 +264,19 @@ def set_data(request: fastapi.Request, data: dict, key: str = None, owner: str =
 
     # add the data to the db
     db.insert("""
-    REPLACE INTO `DataBlock` (id, category, modified_by, data, last_modified)
-    VALUES(:id, :category, :modified_by, :data, CURRENT_TIMESTAMP);
-    """, {"id": key, "category": category, "modified_by": modified_by, "data": json.dumps(data)})
+    REPLACE INTO `DataBlock` (id, owner_id, category, modified_by, data, last_modified)
+    VALUES(:id, :owner_id, :category, :modified_by, :data, CURRENT_TIMESTAMP);
+    """, {"id": key, "owner_id": owner, "category": category, "modified_by": modified_by, "data": json.dumps(data)})
+
+    #     # add the data to the db
+    # db.insert("""
+    # REPLACE INTO `DataBlock` SET 
+    #     category = :category,
+    #     modified_by = :modified_by,
+    #     data = :data,
+    #     last_modified = CURRENT_TIMESTAMP
+    # WHERE id=:id AND owner_id = :owner_id;
+    # """, {"id": key, "category": category, "modified_by": modified_by, "owner_id": owner, "data": json.dumps(data)})
 
     return {'key': key}
 
