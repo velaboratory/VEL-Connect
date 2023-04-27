@@ -272,7 +272,7 @@ namespace VELConnect
 								foreach (KeyValuePair<string, string> elem in state.device.data)
 								{
 									string oldValue = null;
-									lastState?.device.data.TryGetValue(elem.Key, out oldValue);
+									lastState?.device?.data?.TryGetValue(elem.Key, out oldValue);
 									if (elem.Value != oldValue)
 									{
 										try
