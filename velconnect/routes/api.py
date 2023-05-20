@@ -92,8 +92,7 @@ def get_device_by_pairing_code(pairing_code: str):
 
 
 def get_device_by_pairing_code_dict(pairing_code: str) -> dict | None:
-    values = db.query(
-        "SELECT * FROM `Device` WHERE `pairing_code`=:pairing_code;", {'pairing_code': pairing_code})
+    values = db.query("SELECT * FROM `Device` WHERE `pairing_code`=:pairing_code;", {'pairing_code': pairing_code})
     if len(values) == 1:
         device = dict(values[0])
         parse_data(device)
@@ -102,8 +101,7 @@ def get_device_by_pairing_code_dict(pairing_code: str) -> dict | None:
 
 
 def get_user_for_device(hw_id: str) -> dict:
-    values = db.query(
-        """SELECT * FROM `UserDevice` WHERE `hw_id`=:hw_id;""", {'hw_id': hw_id})
+    values = db.query("""SELECT * FROM `UserDevice` WHERE `hw_id`=:hw_id;""", {'hw_id': hw_id})
     if len(values) == 1:
         user_id = dict(values[0])['user_id']
         user = get_user_dict(user_id=user_id)
@@ -265,24 +263,22 @@ def set_data(request: fastapi.Request, data: dict, key: str = None, owner: str =
     if len(old_data_query) == 1:
         old_data: dict = json.loads(old_data_query[0]["data"])
         data = {**old_data, **data}
-        
-        # add the data to the db
-        db.insert("""
-        UPDATE `DataBlock` SET
-            category = :category,
-            modified_by = :modified_by,
-            data = :data,
-            last_modified = CURRENT_TIMESTAMP
-        WHERE id=:id AND owner_id = :owner_id;
-        """, {"id": key, "category": category, "modified_by": modified_by, "owner_id": owner, "data": json.dumps(data)})
-    else:
-        # add the data to the db
-        db.insert("""
-        INSERT INTO `DataBlock` (id, owner_id, category, modified_by, data, last_modified)
-        VALUES(:id, :owner_id, :category, :modified_by, :data, CURRENT_TIMESTAMP);
-        """, {"id": key, "owner_id": owner, "category": category, "modified_by": modified_by, "data": json.dumps(data)})
 
-    
+    # add the data to the db
+    db.insert("""
+    REPLACE INTO `DataBlock` (id, owner_id, category, modified_by, data, last_modified)
+    VALUES(:id, :owner_id, :category, :modified_by, :data, CURRENT_TIMESTAMP);
+    """, {"id": key, "owner_id": owner, "category": category, "modified_by": modified_by, "data": json.dumps(data)})
+
+    #     # add the data to the db
+    # db.insert("""
+    # REPLACE INTO `DataBlock` SET 
+    #     category = :category,
+    #     modified_by = :modified_by,
+    #     data = :data,
+    #     last_modified = CURRENT_TIMESTAMP
+    # WHERE id=:id AND owner_id = :owner_id;
+    # """, {"id": key, "category": category, "modified_by": modified_by, "owner_id": owner, "data": json.dumps(data)})
 
     return {'key': key}
 
@@ -353,8 +349,7 @@ def get_user(response: Response, user_id: str):
 
 
 def get_user_dict(user_id: str) -> dict | None:
-    values = db.query(
-        "SELECT * FROM `User` WHERE `id`=:user_id;", {'user_id': user_id})
+    values = db.query("SELECT * FROM `User` WHERE `id`=:user_id;", {'user_id': user_id})
     if len(values) == 1:
         user = dict(values[0])
         parse_data(user)
@@ -384,8 +379,7 @@ async def upload_file(request: fastapi.Request, file: UploadFile, key: str | Non
         content = await file.read()  # async read
         await out_file.write(content)  # async write
     # add a datablock to link to the file
-    set_data(request, data={'filename': file.filename},
-             key=key, category='file', modified_by=modified_by)
+    set_data(request, data={'filename': file.filename}, key=key, category='file', modified_by=modified_by)
     return {"filename": file.filename, 'key': key}
 
 
