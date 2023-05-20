@@ -9,7 +9,7 @@ class DB:
 
     def create_or_connect(self):
         create = False
-        if not os.path.exists(self.db_name, ):
+        if not os.path.exists(self.db_name):
             create = True
 
         conn = sqlite3.connect(self.db_name)

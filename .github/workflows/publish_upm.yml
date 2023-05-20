@@ -1,8 +1,8 @@
 name: Publish to Verdaccio
 on:
   push:
-    branches:
-    - master
+    branches: ["main"]
+    paths: ["unity_package/**"]
 jobs:
   publish-npm:
     name: publish to npm.ugavel.com
