@@ -151,6 +151,7 @@ def get_device_data(request: Request, response: Response, hw_id: str):
     room_data = get_data(response, key=room_key, user_id=user['id'])
 
     if "error" in room_data:
+        response.status_code = None # this really isn't an error, so we reset the status code
         set_data(request, data={}, key=room_key,
                  modified_by=None, category="room")
         room_data = get_data(response, key=room_key, user_id=user['id'])
