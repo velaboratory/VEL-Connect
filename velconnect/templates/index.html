@@ -312,14 +312,17 @@
                     ]
                 });
 
-                document.getElementById('cover_image').src = `/static/img/cover_${respData['device']['current_app']}.png`
-                document.getElementById('shareable_link').href = `/join/${respData['device']['current_app']}/${respData['device']['current_room']}`
+                if (respData['device']['current_app']) {
+                    document.getElementById('cover_image').src = `/static/img/cover_${respData['device']['current_app']}.png`
+                    document.getElementById('shareable_link').href = `/join/${respData['device']['current_app']}/${respData['device']['current_room']}`
+                }
 
                 loading.style.display = "none";
                 headset_details.style.display = "block";
             }, (status) => {
                 loading.style.display = "none";
                 failure.style.display = "block";
+                window.location.href = "/pair";
             });
 
 
@@ -441,7 +444,7 @@
         const bntPubCam = document.getElementById("bnt_pubcam");
         const bntPubScreen = document.getElementById("bnt_pubscreen");
 
-        setDeviceData({"streamer_stream_id": roomName});
+        // setDeviceData({"streamer_stream_id": roomName});
 
         const serverURL = "wss://velnet.ugavel.com/ws";
 

@@ -19,6 +19,7 @@ class DB:
             # create the db
             with open('CreateDB.sql', 'r') as f:
                 curr.executescript(f.read())
+                conn.commit()
 
         conn.set_trace_callback(print)
         return conn, curr

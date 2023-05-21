@@ -237,9 +237,13 @@ def set_data_with_random_key(request: fastapi.Request, data: dict, owner: str, m
 
 
 @router.post('/set_data/{key}')
-def set_data(request: fastapi.Request, data: dict, key: str = None, owner: str = None, modified_by: str = None,
+def set_data(request: fastapi.Request, data: dict, key: str = None, owner: str = 'none', modified_by: str = None,
              category: str = None, visibility: Visibility = Visibility.public) -> dict:
     """Creates a little storage bucket for arbitrary data"""
+
+    # sqlite composite key isn't necessarily unique if a value is null
+    if owner == None:
+        owner = 'none'
 
     # add the client's IP address if no sender specified
     if 'modified_by' in data:
