@@ -11,6 +11,7 @@ discord_bot/graph.png
 discord_bot/config.py
 env_win/
 velconnect.db
+db/
 velconnect*.db
 .idea/
 velconnect/data/

@@ -12,7 +12,7 @@ from enum import Enum
 
 import db
 
-db = db.DB("velconnect.db")
+db = db.DB("db/velconnect.db")
 
 # APIRouter creates path operations for user module
 router = fastapi.APIRouter(
