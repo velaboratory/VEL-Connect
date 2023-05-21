@@ -4,6 +4,6 @@ services:
     build: .
     restart: always
     ports:
-      - "8000:80"
+      - "8046:80"
     volumes:
       - ./db:/usr/src/velconnect/db

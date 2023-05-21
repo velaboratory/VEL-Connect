@@ -7,7 +7,7 @@ cd velconnect
 docker compose up -d
 ```
 
-and visit http://localhost:8000 in your browser.
+and visit http://localhost:8046 in your browser.
 
 This will set up autorestart of the docker image. To pull updates, just run `docker compose up -d` again.
 
