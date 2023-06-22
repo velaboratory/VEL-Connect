@@ -11,13 +11,14 @@ class DB:
         create = False
         if not os.path.exists(self.db_name):
             create = True
+            os.makedirs(os.path.dirname(self.db_name))
 
         conn = sqlite3.connect(self.db_name)
         conn.row_factory = sqlite3.Row
         curr = conn.cursor()
         if create:
             # create the db
-            with open('CreateDB.sql', 'r') as f:
+            with open("CreateDB.sql", "r") as f:
                 curr.executescript(f.read())
                 conn.commit()
 
