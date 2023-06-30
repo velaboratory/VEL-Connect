@@ -20,6 +20,7 @@ origins = [
     "http://localhost:5173",
     "https://convrged.ugavel.com",
     "http://convrged.ugavel.com",
+    "https://healxr.ugavel.com"
 ]
 
 app.add_middleware(
@@ -27,8 +28,7 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
-    allow_origins_regex="https://.*\.ugavel.com"
+    allow_headers=["*"]
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
