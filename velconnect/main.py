@@ -28,6 +28,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origins_regex="https://.*\.ugavel.com"
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
