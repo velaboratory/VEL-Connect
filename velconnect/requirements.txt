@@ -1,8 +1,0 @@
-fastapi
-autopep8
-uvicorn
-pymysql
-pyppeteer
-jinja2
-python-multipart
-aiofiles

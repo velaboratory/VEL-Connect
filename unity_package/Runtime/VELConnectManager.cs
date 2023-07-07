@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -13,6 +14,7 @@ using VelNet;
 
 namespace VELConnect
 {
+	// ReSharper disable once InconsistentNaming
 	public class VELConnectManager : MonoBehaviour
 	{
 		public string velConnectUrl = "http://localhost";
@@ -33,15 +35,17 @@ namespace VELConnect
 
 			public class Device
 			{
-				public string hw_id;
+				public readonly string id;
+				public readonly DateTime created;
+				public readonly DateTime updated;
+				public string device_id;
 				public string os_info;
 				public string friendly_name;
 				public string modified_by;
 				public string current_app;
 				public string current_room;
-				public int pairing_code;
-				public string date_created;
-				public string last_modified;
+				public string pairing_code;
+				public DateTime last_online;
 				public Dictionary<string, string> data;
 
 				/// <summary>
@@ -56,13 +60,14 @@ namespace VELConnect
 
 			public class RoomState
 			{
-				public string error;
-				public string id;
+				public readonly string id;
+				public readonly DateTime created;
+				public readonly DateTime updated;
+				public string block_id;
+				public string owner_id;
+				public string visibility;
 				public string category;
-				public string date_created;
 				public string modified_by;
-				public string last_modified;
-				public string last_accessed;
 				public Dictionary<string, string> data;
 
 				/// <summary>
@@ -75,17 +80,32 @@ namespace VELConnect
 				}
 			}
 
+
 			public User user;
 			public Device device;
 			public RoomState room;
+		}
+
+		public class UserCount
+		{
+			public readonly string id;
+			public readonly DateTime created;
+			public readonly DateTime updated;
+			public string device_id;
+			public string app_id;
+			public string room_id;
+			public int total_users;
+			public int room_users;
+			public string version;
+			public string platform;
 		}
 
 		public State lastState;
 
 		public static Action<State> OnInitialState;
 		public static Action<string, string> OnDeviceFieldChanged;
-		public static Action<string, string> OnDeviceDataChanged;
-		public static Action<string, string> OnRoomDataChanged;
+		public static Action<string, object> OnDeviceDataChanged;
+		public static Action<string, object> OnRoomDataChanged;
 
 		private static readonly Dictionary<string, List<CallbackListener>> deviceFieldCallbacks =
 			new Dictionary<string, List<CallbackListener>>();
@@ -111,7 +131,7 @@ namespace VELConnect
 			public bool sendInitialState;
 		}
 
-		public static int PairingCode
+		public static string PairingCode
 		{
 			get
 			{
@@ -120,7 +140,7 @@ namespace VELConnect
 				// change once a day
 				hash.Append(DateTime.UtcNow.DayOfYear);
 				// between 1000 and 9999 inclusive (any 4 digit number)
-				return Math.Abs(hash.GetHashCode()) % 9000 + 1000;
+				return (Math.Abs(hash.GetHashCode()) % 9000 + 1000).ToString();
 			}
 		}
 
@@ -147,24 +167,24 @@ namespace VELConnect
 		// Start is called before the first frame update
 		private void Start()
 		{
-			SetDeviceField(new Dictionary<string, object>
+			SetDeviceField(new State.Device
 			{
-				{ "current_app", Application.productName },
-				{ "pairing_code", PairingCode },
-				{ "friendly_name", SystemInfo.deviceName },
+				os_info = SystemInfo.operatingSystem,
+				friendly_name = SystemInfo.deviceName,
+				current_app = Application.productName,
+				pairing_code = PairingCode,
 			});
 
 			UpdateUserCount();
-
 
 			StartCoroutine(SlowLoop());
 
 			VelNetManager.OnJoinedRoom += room =>
 			{
-				SetDeviceField(new Dictionary<string, object>
+				SetDeviceField(new State.Device
 				{
-					{ "current_app", Application.productName },
-					{ "current_room", room },
+					current_app = Application.productName,
+					current_room = room,
 				});
 			};
 		}
@@ -176,17 +196,20 @@ namespace VELConnect
 
 			VelNetManager.GetRooms(rooms =>
 			{
-				Dictionary<string, object> postData = new Dictionary<string, object>
+				UserCount postData = new UserCount
 				{
-					{ "hw_id", DeviceId },
-					{ "app_id", Application.productName },
-					{ "room_id", VelNetManager.Room ?? "" },
-					{ "total_users", rooms.rooms.Sum(r => r.numUsers) - (leaving ? 1 : 0) },
-					{ "room_users", VelNetManager.PlayerCount - (leaving ? 1 : 0) },
-					{ "version", Application.version },
-					{ "platform", SystemInfo.operatingSystem },
+					device_id = DeviceId,
+					app_id = Application.productName,
+					room_id = VelNetManager.Room ?? "",
+					total_users = rooms.rooms.Sum(r => r.numUsers) - (leaving ? 1 : 0),
+					room_users = VelNetManager.PlayerCount - (leaving ? 1 : 0),
+					version = Application.version,
+					platform = SystemInfo.operatingSystem,
 				};
-				PostRequestCallback(velConnectUrl + "/api/update_user_count", JsonConvert.SerializeObject(postData));
+				PostRequestCallback(velConnectUrl + "/api/collections/UserCount/records", JsonConvert.SerializeObject(postData, Formatting.None, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				}));
 			});
 		}
 
@@ -196,7 +219,7 @@ namespace VELConnect
 			{
 				try
 				{
-					GetRequestCallback(velConnectUrl + "/api/device/get_data/" + DeviceId, json =>
+					GetRequestCallback(velConnectUrl + "/state/device/" + DeviceId, json =>
 					{
 						State state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
@@ -221,10 +244,11 @@ namespace VELConnect
 						}
 
 
-						if (state.device.modified_by != DeviceId)
+						// if (state.device.modified_by != DeviceId)
 						{
 							FieldInfo[] fields = state.device.GetType().GetFields();
 
+							// loop through all the fields in the device
 							foreach (FieldInfo fieldInfo in fields)
 							{
 								string newValue = fieldInfo.GetValue(state.device) as string;
@@ -311,7 +335,8 @@ namespace VELConnect
 							}
 						}
 
-						if (state.room.modified_by != DeviceId && state.room.data != null)
+						// if (state.room.modified_by != DeviceId && state.room.data != null)
+						if (state.room?.data != null)
 						{
 							foreach (KeyValuePair<string, string> elem in state.room.data)
 							{
@@ -488,13 +513,30 @@ namespace VELConnect
 
 		/// <summary>
 		/// Sets data on the device keys themselves
+		/// These are fixed fields defined for every application
 		/// </summary>
-		public static void SetDeviceField(Dictionary<string, object> device)
+		public static void SetDeviceField(State.Device device)
 		{
+			device.last_online = DateTime.UtcNow;
+
+			// update our local state, so we don't get change events on our own updates
+			if (_instance.lastState?.device != null)
+			{
+				FieldInfo[] fields = device.GetType().GetFields();
+
+				// loop through all the fields in the device
+				foreach (FieldInfo fieldInfo in fields)
+				{
+					fieldInfo.SetValue(_instance.lastState.device, fieldInfo.GetValue(device));
+				}
+			}
+
 			PostRequestCallback(
-				_instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
-				JsonConvert.SerializeObject(device),
-				new Dictionary<string, string> { { "modified_by", DeviceId } }
+				_instance.velConnectUrl + "/device/" + DeviceId,
+				JsonConvert.SerializeObject(device, Formatting.None, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				})
 			);
 		}
 
@@ -503,11 +545,33 @@ namespace VELConnect
 		/// </summary>
 		public static void SetDeviceData(Dictionary<string, string> data)
 		{
+			State.Device device = new State.Device
+			{
+				last_online = DateTime.UtcNow,
+				data = data,
+			};
+
+			// update our local state, so we don't get change events on our own updates
+			if (_instance.lastState?.device != null)
+			{
+				foreach (KeyValuePair<string, string> kvp in data)
+				{
+					_instance.lastState.device.data[kvp.Key] = kvp.Value;
+				}
+			}
+
 			PostRequestCallback(
-				_instance.velConnectUrl + "/api/device/set_data/" + DeviceId,
-				JsonConvert.SerializeObject(new Dictionary<string, object> { { "data", data } }),
-				new Dictionary<string, string> { { "modified_by", DeviceId } }
+				_instance.velConnectUrl + "/device/" + DeviceId,
+				JsonConvert.SerializeObject(device, Formatting.None, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				})
 			);
+		}
+
+		public static void SetRoomData(string key, string value)
+		{
+			SetRoomData(new Dictionary<string, string> { { key, value } });
 		}
 
 		public static void SetRoomData(Dictionary<string, string> data)
@@ -518,34 +582,53 @@ namespace VELConnect
 				return;
 			}
 
+			State.RoomState room = new State.RoomState
+			{
+				category = "room",
+				visibility = "public",
+				data = data
+			};
+
+			// update our local state, so we don't get change events on our own updates
+			if (_instance.lastState?.room != null)
+			{
+				foreach (KeyValuePair<string, string> kvp in data)
+				{
+					_instance.lastState.room.data[kvp.Key] = kvp.Value;
+				}
+			}
+
 			PostRequestCallback(
-				_instance.velConnectUrl + "/api/set_data/" + Application.productName + "_" + VelNetManager.Room,
-				JsonConvert.SerializeObject(data),
-				new Dictionary<string, string> { { "modified_by", DeviceId } }
+				_instance.velConnectUrl + "/data_block/" + Application.productName + "_" + VelNetManager.Room,
+				JsonConvert.SerializeObject(room, Formatting.None, new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				})
 			);
 		}
 
+		// TODO
 		public static void UploadFile(string fileName, byte[] fileData, Action<string> successCallback = null)
 		{
-			MultipartFormDataContent requestContent = new MultipartFormDataContent();
-			ByteArrayContent fileContent = new ByteArrayContent(fileData);
-
-			requestContent.Add(fileContent, "file", fileName);
-
-			Task.Run(async () =>
-			{
-				HttpResponseMessage r =
-					await new HttpClient().PostAsync(_instance.velConnectUrl + "/api/upload_file", requestContent);
-				string resp = await r.Content.ReadAsStringAsync();
-				Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(resp);
-				successCallback?.Invoke(dict["key"]);
-			});
+			// MultipartFormDataContent requestContent = new MultipartFormDataContent();
+			// ByteArrayContent fileContent = new ByteArrayContent(fileData);
+			//
+			// requestContent.Add(fileContent, "file", fileName);
+			//
+			// Task.Run(async () =>
+			// {
+			// 	HttpResponseMessage r =
+			// 		await new HttpClient().PostAsync(_instance.velConnectUrl + "/api/upload_file", requestContent);
+			// 	string resp = await r.Content.ReadAsStringAsync();
+			// 	Dictionary<string, string> dict = JsonConvert.DeserializeObject<Dictionary<string, string>>(resp);
+			// 	successCallback?.Invoke(dict["key"]);
+			// });
 		}
 
-
+		// TODO
 		public static void DownloadFile(string key, Action<byte[]> successCallback = null)
 		{
-			_instance.StartCoroutine(_instance.DownloadFileCo(key, successCallback));
+			// _instance.StartCoroutine(_instance.DownloadFileCo(key, successCallback));
 		}
 
 		private IEnumerator DownloadFileCo(string key, Action<byte[]> successCallback = null)

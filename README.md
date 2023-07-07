@@ -1,73 +1,69 @@
-## VELConnect API Setup
+## VEL-Connect Server Setup
 
-## Option 1: Build and run using Docker Compose
+### Option 1: Download the latest binary from releases
+
+Then run with:
+ - Windows: `velconnect.exe serve`
+ - Linux: `./velconnect serve`
+
+Run `./velconnect help` for help
+
+### Option 1: Build and run using Docker Compose
 
 ```sh
 cd velconnect
-docker compose up -d
+docker compose up -d --build
 ```
 
-and visit http://localhost:8046 in your browser.
+and visit http://localhost:8090/\_/ in your browser.
 
-This will set up autorestart of the docker image. To pull updates, just run `docker compose up -d` again.
+This will set up autorestart of the docker image. To pull updates, just run `docker compose up -d --build` again.
 
-## Option 2: Pull from Docker Hub:
+### Option 2: Pull from Docker Hub:
 
 ```sh
-docker run -p 80:80 velaboratory/velconnect
+docker run -p 80:8090 velaboratory/velconnect
 ```
 
-and visit http://localhost in your browser.
+and visit http://localhost/\_/ in your browser.
 
 or
 
 ```sh
-docker run -p 8000:80 --name web velaboratory/velconnect
+docker run -p 8080:8090 --name velconnect velaboratory/velconnect
 ```
 
-to access from http://localhost:8000 in your browser and name the container "web".
+to access from http://localhost:8080/\_/ in your browser and name the container "velconnect".
 
-## Option 3: Build Docker Image:
+### Option 3: Run Go locally
 
-Make sure you're in the `velconnect/` folder.
+1. Make sure to install [Go](https://go.dev/) on your machine
+2. `cd velconnect`
+3. To run: `go run main.go serve`
+4. To build: `go build`
+   - Then run the executable e.g. `velconnect.exe serve`
 
-```sh
-docker build --tag velconnect .
-docker rm web
-docker run -p 80:80 --name web velconnect
+## Set up systemctl service:
+
+```ini
+[Unit]
+Description = velconnect
+
+[Service]
+Type           = simple
+User           = root
+Group          = root
+LimitNOFILE    = 4096
+Restart        = always
+RestartSec     = 5s
+StandardOutput = append:/home/ubuntu/VEL-Connect/velconnect/errors.log
+StandardError  = append:/home/ubuntu/VEL-Connect/velconnect/errors.log
+ExecStart      = /home/ubuntu/VEL-Connect/velconnect/velconnect serve
+
+[Install]
+WantedBy = multi-user.target
 ```
 
-or run `./rebuild.sh`
-
-## Option 4: Run Python locally (WSL or native Linux)
-
-1. `cd velconnect`
-2. Create pip env: `python3 -m venv env`
-3. Activate the env `. env/bin/activate`
-4. Install packages `pip install -r requirements.txt`
-5. Add `config_mysql.py`
-   - Get from some old server
-   - Or copy and fill out the values from `config_mysql_template.py`
-6. Run `./run_server.sh`
-
-   - Or set up systemctl service:
-
-     ```ini
-     [Unit]
-     Description=VELConnect API
-     Requires=network.target
-     After=network.target
-
-     [Service]
-     User=ubuntu
-     Group=ubuntu
-     Environment="PATH=/home/ubuntu/VEL-Connect/velconnect/env/bin"
-     WorkingDirectory=/home/ubuntu/VEL-Connect/velconnect
-     ExecStart=/home/ubuntu/VEL-Connect/velconnect/env/bin/uvicorn --port 8005 main:app
-     [Install]
-     WantedBy=multi-user.target
-     ```
-
-   - Enter the above in `/etc/systemd/system/velconnect.service`
-   - `sudo systemctl enable velconnect`
-   - `sudo systemctl start velconnect`
+- Enter the above in `/etc/systemd/system/velconnect.service`
+- `sudo systemctl enable velconnect`
+- `sudo systemctl start velconnect`

@@ -1,9 +1,9 @@
-version: "1.0"
+version: "2.0"
 services:
-  web:
+  server:
     build: .
     restart: always
     ports:
-      - "8046:80"
+      - "8090:8090"
     volumes:
-      - ./db:/usr/src/velconnect/db
+      - ./pb_data:/pb_data
