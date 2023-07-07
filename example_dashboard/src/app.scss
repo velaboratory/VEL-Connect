@@ -1,0 +1,16 @@
+/* Write your global styles here, in SCSS syntax. Variables and mixins from the src/variables.scss file are available here without importing */
+$color-blossom: #bc1f2d;
+$color-fade: #be434d;
+
+$color-bg: #1a1a1a;
+$color-bg-alt: #333;
+
+/* $color-text: #dedce5; */
+$color-text: #c9c9c9;
+$font-size-base: 2rem;
+
+$font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+	'Noto Sans', sans-serif;
+$font-family-heading: $font-family-base;
+
+@import 'lib/css/main';

@@ -68,6 +68,11 @@ func main() {
 				}
 			}
 
+			// double-check that data is not null
+			if (record.Get("data") == nil) || (record.Get("data") == "") {
+				record.Set("data", "{}")
+			}
+
 			// apply to the db
 			if err := dao.SaveRecord(record); err != nil {
 				return err
@@ -132,6 +137,11 @@ func main() {
 				if val, ok := requestData.Data[v]; ok {
 					record.Set(v, val)
 				}
+			}
+
+			// double-check that data is not null
+			if (record.Get("data") == nil) || (record.Get("data") == "") {
+				record.Set("data", "{}")
 			}
 
 			// apply to the db
