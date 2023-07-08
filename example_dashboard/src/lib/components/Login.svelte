@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { currentUser, pb } from '../velconnect';
+	import { currentUser, pb } from '$lib/js/velconnect';
 
 	let email: string;
 	let password: string;

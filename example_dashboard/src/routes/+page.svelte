@@ -2,23 +2,26 @@
 	import { onDestroy, onMount } from 'svelte';
 	import {
 		currentDevice,
-		type Device,
+		type DeviceData,
 		pairedDevices,
 		pb,
 		type RoomData,
 		currentUser
-	} from '../lib/velconnect';
+	} from '$lib/js/velconnect';
 	import Login from '$lib/components/Login.svelte';
 	import Pair from '$lib/components/Pair.svelte';
+	import { prettyDate } from '$lib/js/util';
 
 	if ($currentDevice == '' && $pairedDevices.length > 0) {
 		currentDevice.set($pairedDevices[0]);
 	}
 
 	let unsubscribeDeviceData: () => void;
+	let unsubscribeRoomData: () => void;
 	let unsubscribeCurrentDevice: () => void;
+	let unsubscribeCurrentUser: () => void;
 
-	let deviceData: Device | null;
+	let deviceData: DeviceData | null;
 	let roomData: RoomData | null;
 
 	let sending = false;
@@ -38,20 +41,49 @@
 			unsubscribeDeviceData?.();
 			if (val != '') {
 				deviceData = await pb.collection('Device').getOne($currentDevice);
-				unsubscribeDeviceData = await pb.collection('Device').subscribe(val, (data) => {
-					deviceData = data.record as Device;
+				if (deviceData != null) getRoomData(deviceData);
+				unsubscribeDeviceData = await pb.collection('Device').subscribe(val, async (data) => {
+					deviceData = data.record as DeviceData;
+					getRoomData(deviceData);
 				});
 			} else {
 				deviceData = null;
 				roomData = null;
 			}
 		});
+
+		unsubscribeCurrentUser = currentUser.subscribe((user) => {
+			pairedDevices.set(user?.devices ?? []);
+		});
 	});
 
 	onDestroy(() => {
 		unsubscribeCurrentDevice?.();
 		unsubscribeDeviceData?.();
+		unsubscribeRoomData?.();
+		unsubscribeCurrentUser?.();
 	});
+
+	async function getRoomData(deviceData: DeviceData) {
+		// get room data
+		unsubscribeRoomData?.();
+		// create or just fetch room by name
+		roomData = await fetch(
+			`${pb.baseUrl}/data_block/${deviceData.current_app}_${deviceData.current_room}`,
+			{
+				method: 'POST'
+			}
+		).then((r) => r.json());
+		console.log(roomData);
+		if (roomData) {
+			unsubscribeDeviceData = await pb.collection('DataBlock').subscribe(roomData.id, (data) => {
+				roomData = data.record as RoomData;
+				unsubscribeRoomData?.();
+			});
+		} else {
+			console.error('Failed to get or create room');
+		}
+	}
 
 	let abortController = new AbortController();
 	function delayedSend() {
@@ -106,6 +138,10 @@
 	}
 </script>
 
+<svelte:head>
+	<title>VEL-Connect</title>
+</svelte:head>
+
 <h1>VEL-Connect</h1>
 <img src="/img/velconnect_logo_1.png" alt="logo" width="70px" height="28px" />
 <p>
@@ -119,20 +155,22 @@
 
 <div>
 	<h3>Devices:</h3>
-	{#each $pairedDevices as d}
-		<div>
-			<button
-				on:click={() => {
-					currentDevice.set(d);
-				}}>{d}</button
-			>
-			<button
-				on:click={() => {
-					removeDevice(d);
-				}}>x</button
-			>
-		</div>
-	{/each}
+	<div class="device-list">
+		{#each $pairedDevices as d}
+			<div>
+				<button
+					on:click={() => {
+						currentDevice.set(d);
+					}}>{d}</button
+				>
+				<button
+					on:click={() => {
+						removeDevice(d);
+					}}>x</button
+				>
+			</div>
+		{/each}
+	</div>
 	{#if $pairedDevices.length == 0}
 		<p>No devices paired. Enter a pairing code above.</p>
 	{/if}
@@ -158,11 +196,11 @@
 		</device-field>
 		<device-field>
 			<h6>First Seen</h6>
-			<p>{deviceData.created}</p>
+			<p>{prettyDate(deviceData.created)}</p>
 		</device-field>
 		<device-field>
 			<h6>Last Seen</h6>
-			<p>{deviceData.updated}</p>
+			<p>{prettyDate(deviceData.updated)}</p>
 		</device-field>
 	</div>
 
@@ -218,8 +256,11 @@
 		</device-field>
 	</div>
 
-	<h6>Raw JSON:</h6>
+	<h3>Raw JSON:</h3>
+	<h6>Device Data</h6>
 	<pre><code>{JSON.stringify(deviceData, null, 2)}</code></pre>
+	<h6>Room Data</h6>
+	<pre><code>{JSON.stringify(roomData, null, 2)}</code></pre>
 {/if}
 
 <style lang="scss">
@@ -230,6 +271,21 @@
 		width: fit-content;
 		p {
 			margin: 0;
+		}
+	}
+
+	.device-list {
+		display: flex;
+		flex-direction: column;
+		width: fit-content;
+		gap: 0.5em;
+
+		& > div {
+			display: flex;
+			gap: 0.2em;
+			& > button:first-child {
+				flex-grow: 1;
+			}
 		}
 	}
 </style>

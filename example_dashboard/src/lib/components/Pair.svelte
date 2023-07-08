@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { currentDevice, currentUser, pb, type Device, pairedDevices } from '../velconnect';
+	import { currentDevice, currentUser, pb, type DeviceData, pairedDevices } from '$lib/js/velconnect';
 
 	let pairingCode: string;
 	let errorMessage: string | null;
@@ -9,7 +9,7 @@
 		try {
 			let device = (await pb
 				.collection('Device')
-				.getFirstListItem(`pairing_code="${pairingCode}"`)) as Device;
+				.getFirstListItem(`pairing_code="${pairingCode}"`)) as DeviceData;
 
 			// add it to the local data
 			currentDevice.set(device.id);

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
@@ -35,17 +36,17 @@ namespace VELConnect
 
 			public class Device
 			{
-				public readonly string id;
-				public readonly DateTime created;
-				public readonly DateTime updated;
-				public string device_id;
-				public string os_info;
-				public string friendly_name;
-				public string modified_by;
-				public string current_app;
-				public string current_room;
-				public string pairing_code;
-				public DateTime last_online;
+				[CanBeNull] public readonly string id;
+				[CanBeNull] public string created = null;
+				[CanBeNull] public string updated = null;
+				[CanBeNull] public string device_id;
+				[CanBeNull] public string os_info;
+				[CanBeNull] public string friendly_name;
+				[CanBeNull] public string modified_by;
+				[CanBeNull] public string current_app;
+				[CanBeNull] public string current_room;
+				[CanBeNull] public string pairing_code;
+				[CanBeNull] public string last_online;
 				public Dictionary<string, string> data;
 
 				/// <summary>
@@ -88,9 +89,9 @@ namespace VELConnect
 
 		public class UserCount
 		{
-			public readonly string id;
-			public readonly DateTime created;
-			public readonly DateTime updated;
+			[CanBeNull] public readonly string id;
+			public readonly DateTime? created;
+			public readonly DateTime? updated;
 			public string device_id;
 			public string app_id;
 			public string room_id;
@@ -100,7 +101,20 @@ namespace VELConnect
 			public string platform;
 		}
 
+		public enum DeviceField
+		{
+			device_id,
+			os_info,
+			friendly_name,
+			modified_by,
+			current_app,
+			current_room,
+			pairing_code,
+			last_online
+		}
+
 		public State lastState;
+		public State state;
 
 		public static Action<State> OnInitialState;
 		public static Action<string, string> OnDeviceFieldChanged;
@@ -136,7 +150,7 @@ namespace VELConnect
 			get
 			{
 				Hash128 hash = new Hash128();
-				hash.Append(DeviceId);
+				hash.Append(deviceId);
 				// change once a day
 				hash.Append(DateTime.UtcNow.DayOfYear);
 				// between 1000 and 9999 inclusive (any 4 digit number)
@@ -144,51 +158,51 @@ namespace VELConnect
 			}
 		}
 
-		private static string DeviceId
-		{
-			get
-			{
-#if UNITY_EDITOR
-				// allows running multiple builds on the same computer
-				// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
-				return SystemInfo.deviceUniqueIdentifier + "_EDITOR";
-#else
-				return SystemInfo.deviceUniqueIdentifier;
-#endif
-			}
-		}
+		private static string deviceId;
 
 		private void Awake()
 		{
 			if (_instance != null) Debug.LogError("VELConnectManager instance already exists", this);
 			_instance = this;
+
+			// Compute device id
+			MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
+			StringBuilder sb = new StringBuilder(SystemInfo.deviceUniqueIdentifier);
+			sb.Append(Application.productName);
+#if UNITY_EDITOR
+			// allows running multiple builds on the same computer
+			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
+			sb.Append(Application.dataPath);
+			sb.Append("EDITOR");
+#endif
+			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
+			deviceId = id[..15];
 		}
 
 		// Start is called before the first frame update
 		private void Start()
 		{
-			SetDeviceField(new State.Device
+			SetDeviceField(new Dictionary<DeviceField, string>
 			{
-				os_info = SystemInfo.operatingSystem,
-				friendly_name = SystemInfo.deviceName,
-				current_app = Application.productName,
-				pairing_code = PairingCode,
+				{ DeviceField.os_info, SystemInfo.operatingSystem },
+				{ DeviceField.friendly_name, SystemInfo.deviceName },
+				{ DeviceField.current_app, Application.productName },
+				{ DeviceField.pairing_code, PairingCode },
 			});
 
-			UpdateUserCount();
+			// UpdateUserCount();
 
 			StartCoroutine(SlowLoop());
 
 			VelNetManager.OnJoinedRoom += room =>
 			{
-				SetDeviceField(new State.Device
+				SetDeviceField(new Dictionary<DeviceField, string>
 				{
-					current_app = Application.productName,
-					current_room = room,
+					{ DeviceField.current_app, Application.productName },
+					{ DeviceField.current_room, room },
 				});
 			};
 		}
-
 
 		private void UpdateUserCount(bool leaving = false)
 		{
@@ -198,7 +212,7 @@ namespace VELConnect
 			{
 				UserCount postData = new UserCount
 				{
-					device_id = DeviceId,
+					device_id = deviceId,
 					app_id = Application.productName,
 					room_id = VelNetManager.Room ?? "",
 					total_users = rooms.rooms.Sum(r => r.numUsers) - (leaving ? 1 : 0),
@@ -219,9 +233,9 @@ namespace VELConnect
 			{
 				try
 				{
-					GetRequestCallback(velConnectUrl + "/state/device/" + DeviceId, json =>
+					GetRequestCallback(velConnectUrl + "/state/device/" + deviceId, json =>
 					{
-						State state = JsonConvert.DeserializeObject<State>(json);
+						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
 
 						bool isInitialState = false;
@@ -380,6 +394,10 @@ namespace VELConnect
 						}
 
 						lastState = state;
+						if (lastState?.device?.pairing_code == null)
+						{
+							Debug.LogError("Pairing code nulllll");
+						}
 					});
 				}
 				catch (Exception e)
@@ -510,33 +528,46 @@ namespace VELConnect
 			return _instance != null ? _instance.lastState?.room?.TryGetData(key) : null;
 		}
 
-
 		/// <summary>
 		/// Sets data on the device keys themselves
 		/// These are fixed fields defined for every application
 		/// </summary>
-		public static void SetDeviceField(State.Device device)
+		public static void SetDeviceField(Dictionary<DeviceField, string> device)
 		{
-			device.last_online = DateTime.UtcNow;
+			device[DeviceField.last_online] = DateTime.UtcNow.ToLongDateString();
 
-			// update our local state, so we don't get change events on our own updates
-			if (_instance.lastState?.device != null)
+			if (_instance.state?.device != null)
 			{
-				FieldInfo[] fields = device.GetType().GetFields();
-
 				// loop through all the fields in the device
-				foreach (FieldInfo fieldInfo in fields)
+				foreach (DeviceField key in device.Keys.ToArray())
 				{
-					fieldInfo.SetValue(_instance.lastState.device, fieldInfo.GetValue(device));
+					FieldInfo field = _instance.state.device.GetType().GetField(key.ToString());
+					if ((string)field.GetValue(_instance.state.device) != device[key])
+					{
+						if (_instance.lastState?.device != null)
+						{
+							// update our local state, so we don't get change events on our own updates
+							field.SetValue(_instance.lastState.device, device[key]);
+						}
+					}
+					else
+					{
+						// don't send this field, since it's the same
+						device.Remove(key);
+					}
+				}
+
+				// last_online field always changes
+				if (device.Keys.Count <= 1)
+				{
+					// nothing changed, don't send
+					return;
 				}
 			}
 
 			PostRequestCallback(
-				_instance.velConnectUrl + "/device/" + DeviceId,
-				JsonConvert.SerializeObject(device, Formatting.None, new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Ignore
-				})
+				_instance.velConnectUrl + "/device/" + deviceId,
+				JsonConvert.SerializeObject(device)
 			);
 		}
 
@@ -545,23 +576,44 @@ namespace VELConnect
 		/// </summary>
 		public static void SetDeviceData(Dictionary<string, string> data)
 		{
-			State.Device device = new State.Device
+			if (_instance.state?.device != null)
 			{
-				last_online = DateTime.UtcNow,
-				data = data,
-			};
-
-			// update our local state, so we don't get change events on our own updates
-			if (_instance.lastState?.device != null)
-			{
-				foreach (KeyValuePair<string, string> kvp in data)
+				foreach (string key in data.Keys.ToList())
 				{
-					_instance.lastState.device.data[kvp.Key] = kvp.Value;
+					// if the value is unchanged from the current state, remove it so we don't double-update
+					if (_instance.state.device.data.TryGetValue(key, out string val) && val == data[key])
+					{
+						data.Remove(key);
+					}
+					else
+					{
+						// update our local state, so we don't get change events on our own updates
+						if (_instance.lastState?.device?.data != null)
+						{
+							_instance.lastState.device.data[key] = data[key];
+						}
+					}
 				}
+
+				// nothing was changed
+				if (data.Keys.Count == 0)
+				{
+					return;
+				}
+
+				// if we have no data, just set the whole thing
+				if (_instance.lastState?.device != null) _instance.lastState.device.data ??= data;
 			}
 
+
+			Dictionary<string, object> device = new Dictionary<string, object>
+			{
+				{ "last_online", DateTime.UtcNow.ToLongDateString() },
+				{ "data", data },
+			};
+
 			PostRequestCallback(
-				_instance.velConnectUrl + "/device/" + DeviceId,
+				_instance.velConnectUrl + "/device/" + deviceId,
 				JsonConvert.SerializeObject(device, Formatting.None, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore
@@ -588,6 +640,24 @@ namespace VELConnect
 				visibility = "public",
 				data = data
 			};
+
+			// remove keys that already match our current state
+			if (_instance.state?.room != null)
+			{
+				foreach (string key in data.Keys.ToArray())
+				{
+					if (_instance.state.room.data[key] == data[key])
+					{
+						data.Remove(key);
+					}
+				}
+			}
+
+			// if we have no changed values
+			if (data.Keys.Count == 0)
+			{
+				return;
+			}
 
 			// update our local state, so we don't get change events on our own updates
 			if (_instance.lastState?.room != null)
@@ -727,7 +797,7 @@ namespace VELConnect
 
 		private void OnApplicationFocus(bool focus)
 		{
-			UpdateUserCount(!focus);
+			// UpdateUserCount(!focus);
 		}
 	}
 }

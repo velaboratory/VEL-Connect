@@ -18,7 +18,7 @@ export const currentDevice = writable('');
 interface HasData extends Record {
 	data: { [key: string]: string };
 }
-export interface Device extends Record {
+export interface DeviceData extends Record {
 	current_room: string;
 	current_app: string;
 	data: { [key: string]: string };
