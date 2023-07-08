@@ -190,7 +190,7 @@ namespace VELConnect
 				{ DeviceField.pairing_code, PairingCode },
 			});
 
-			// UpdateUserCount();
+			UpdateUserCount();
 
 			StartCoroutine(SlowLoop());
 
@@ -797,7 +797,7 @@ namespace VELConnect
 
 		private void OnApplicationFocus(bool focus)
 		{
-			// UpdateUserCount(!focus);
+			UpdateUserCount(!focus);
 		}
 	}
 }
