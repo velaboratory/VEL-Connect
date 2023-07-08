@@ -15,7 +15,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
       - name: connect and pull
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.SSH_WORK_DIR }}/../VEL-Connect-PB && git pull && docker compose up -d --build && exit"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd /home/ubuntu/VEL-Connect-v3/velconnect && git pull && docker compose up -d --build && exit"
       - name: cleanup
         run: rm -rf ~/.ssh
 

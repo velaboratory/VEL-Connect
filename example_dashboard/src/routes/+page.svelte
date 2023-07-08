@@ -1,141 +1,26 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
 	import {
 		currentDevice,
-		type DeviceData,
+		delayedSend,
+		deviceData,
 		pairedDevices,
-		pb,
-		type RoomData,
-		currentUser
+		removeDevice,
+		roomData,
+		sending,
+		startListening,
+		stopListening
 	} from '$lib/js/velconnect';
 	import Login from '$lib/components/Login.svelte';
 	import Pair from '$lib/components/Pair.svelte';
 	import { prettyDate } from '$lib/js/util';
-
-	if ($currentDevice == '' && $pairedDevices.length > 0) {
-		currentDevice.set($pairedDevices[0]);
-	}
-
-	let unsubscribeDeviceData: () => void;
-	let unsubscribeRoomData: () => void;
-	let unsubscribeCurrentDevice: () => void;
-	let unsubscribeCurrentUser: () => void;
-
-	let deviceData: DeviceData | null;
-	let roomData: RoomData | null;
-
-	let sending = false;
-
-	$: deviceData,
-		() => {
-			console.log('Device data changed');
-		};
+	import { onDestroy, onMount } from 'svelte';
 
 	onMount(async () => {
-		if ($currentDevice != '') {
-			deviceData = await pb.collection('Device').getOne($currentDevice);
-		}
-
-		unsubscribeCurrentDevice = currentDevice.subscribe(async (val) => {
-			console.log('current device changed');
-			unsubscribeDeviceData?.();
-			if (val != '') {
-				deviceData = await pb.collection('Device').getOne($currentDevice);
-				if (deviceData != null) getRoomData(deviceData);
-				unsubscribeDeviceData = await pb.collection('Device').subscribe(val, async (data) => {
-					deviceData = data.record as DeviceData;
-					getRoomData(deviceData);
-				});
-			} else {
-				deviceData = null;
-				roomData = null;
-			}
-		});
-
-		unsubscribeCurrentUser = currentUser.subscribe((user) => {
-			pairedDevices.set(user?.devices ?? []);
-		});
+		await startListening();
 	});
-
 	onDestroy(() => {
-		unsubscribeCurrentDevice?.();
-		unsubscribeDeviceData?.();
-		unsubscribeRoomData?.();
-		unsubscribeCurrentUser?.();
+		stopListening();
 	});
-
-	async function getRoomData(deviceData: DeviceData) {
-		// get room data
-		unsubscribeRoomData?.();
-		// create or just fetch room by name
-		roomData = await fetch(
-			`${pb.baseUrl}/data_block/${deviceData.current_app}_${deviceData.current_room}`,
-			{
-				method: 'POST'
-			}
-		).then((r) => r.json());
-		console.log(roomData);
-		if (roomData) {
-			unsubscribeDeviceData = await pb.collection('DataBlock').subscribe(roomData.id, (data) => {
-				roomData = data.record as RoomData;
-				unsubscribeRoomData?.();
-			});
-		} else {
-			console.error('Failed to get or create room');
-		}
-	}
-
-	let abortController = new AbortController();
-	function delayedSend() {
-		console.log('fn: delayedSend()');
-
-		// abort the previous send
-		abortController.abort();
-		const newAbortController = new AbortController();
-		abortController = newAbortController;
-		setTimeout(() => {
-			if (!newAbortController.signal.aborted) {
-				send();
-			} else {
-				console.log('aborted');
-			}
-		}, 1000);
-	}
-
-	function send() {
-		console.log('sending...');
-		sending = true;
-		let promises = [];
-		if (deviceData) {
-			promises.push(pb.collection('Device').update(deviceData.id, deviceData));
-		}
-		if (roomData) {
-			promises.push(pb.collection('DataBlock').update(roomData.id, roomData));
-		}
-		Promise.all(promises).then(() => {
-			sending = false;
-		});
-	}
-
-	function removeDevice(d: string) {
-		pairedDevices.set($pairedDevices.filter((i) => i != d));
-
-		if ($currentDevice == d) {
-			console.log('Removed current device');
-
-			// if there are still devices left
-			if ($pairedDevices.length > 0) {
-				currentDevice.set($pairedDevices[0]);
-			} else {
-				currentDevice.set('');
-			}
-		}
-
-		if ($currentUser) {
-			$currentUser.devices.filter((i: string) => i != d);
-			pb.collection('Users').update($currentUser.id, $currentUser);
-		}
-	}
 </script>
 
 <svelte:head>
@@ -182,25 +67,25 @@
 	</div>
 {/if}
 
-{#if deviceData != null && deviceData.data != null}
+{#if $deviceData != null && $deviceData.data != null}
 	<div>
 		<h3>Device Info</h3>
 
 		<device-field>
 			<h6>Device ID:</h6>
-			<code>{deviceData.id}</code>
+			<code>{$deviceData.id}</code>
 		</device-field>
 		<device-field>
 			<h6>Pairing Code:</h6>
-			<code>{deviceData.pairing_code}</code>
+			<code>{$deviceData.pairing_code}</code>
 		</device-field>
 		<device-field>
 			<h6>First Seen</h6>
-			<p>{prettyDate(deviceData.created)}</p>
+			<p>{prettyDate($deviceData.created)}</p>
 		</device-field>
 		<device-field>
 			<h6>Last Seen</h6>
-			<p>{prettyDate(deviceData.updated)}</p>
+			<p>{prettyDate($deviceData.updated)}</p>
 		</device-field>
 	</div>
 
@@ -212,7 +97,7 @@
 			<input
 				type="text"
 				placeholder="Enter username..."
-				bind:value={deviceData.friendly_name}
+				bind:value={$deviceData.friendly_name}
 				on:input={delayedSend}
 			/>
 		</label>
@@ -231,14 +116,14 @@
 			<input
 				type="text"
 				placeholder="https://----.glb"
-				bind:value={deviceData.data.avatar_url}
+				bind:value={$deviceData.data.avatar_url}
 				on:input={delayedSend}
 			/>
 		</label>
 
 		<device-field>
 			<h6>Current Room</h6>
-			<a href="/join/{deviceData.current_app}/room_name" target="blank">
+			<a href="/join/{$deviceData.current_app}/room_name" target="blank">
 				Shareable Link
 				<svg style="width:1em;height:1em;margin-bottom:-.15em;" viewBox="0 0 24 24">
 					<path
@@ -250,7 +135,7 @@
 			<input
 				type="text"
 				placeholder="room_1"
-				bind:value={deviceData.current_room}
+				bind:value={$deviceData.current_room}
 				on:input={delayedSend}
 			/>
 		</device-field>
@@ -258,9 +143,9 @@
 
 	<h3>Raw JSON:</h3>
 	<h6>Device Data</h6>
-	<pre><code>{JSON.stringify(deviceData, null, 2)}</code></pre>
+	<pre><code>{JSON.stringify($deviceData, null, 2)}</code></pre>
 	<h6>Room Data</h6>
-	<pre><code>{JSON.stringify(roomData, null, 2)}</code></pre>
+	<pre><code>{JSON.stringify($roomData, null, 2)}</code></pre>
 {/if}
 
 <style lang="scss">
