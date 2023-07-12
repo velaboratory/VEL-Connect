@@ -19,19 +19,21 @@ namespace VELConnect
 	public class VELConnectManager : MonoBehaviour
 	{
 		public string velConnectUrl = "http://localhost";
-		public static string VelConnectUrl => _instance.velConnectUrl;
-		private static VELConnectManager _instance;
+		private static VELConnectManager instance;
 
 		public class State
 		{
+			public Device device;
+			public DataBlock room;
+			public User user;
+
+
 			public class User
 			{
 				public string id;
-				public string email;
 				public string username;
-				public string date_created;
-				public string last_modified;
-				public Dictionary<string, string> data;
+				public string created;
+				public string updted;
 			}
 
 			public class Device
@@ -47,26 +49,31 @@ namespace VELConnect
 				[CanBeNull] public string current_room;
 				[CanBeNull] public string pairing_code;
 				[CanBeNull] public string last_online;
-				public Dictionary<string, string> data;
+				[CanBeNull] public DeviceExpand expand;
+				public DataBlock deviceData => expand.data;
+
+				public class DeviceExpand
+				{
+					public DataBlock data;
+				}
+
 
 				/// <summary>
 				/// Returns the value if it exists, otherwise null
 				/// </summary>
 				public string TryGetData(string key)
 				{
-					string val = null;
-					return data?.TryGetValue(key, out val) == true ? val : null;
+					return deviceData.data?.TryGetValue(key, out string val) == true ? val : null;
 				}
 			}
 
-			public class RoomState
+			public class DataBlock
 			{
 				public readonly string id;
 				public readonly DateTime created;
 				public readonly DateTime updated;
 				public string block_id;
-				public string owner_id;
-				public string visibility;
+				public string owner;
 				public string category;
 				public string modified_by;
 				public Dictionary<string, string> data;
@@ -80,11 +87,6 @@ namespace VELConnect
 					return data?.TryGetValue(key, out val) == true ? val : null;
 				}
 			}
-
-
-			public User user;
-			public Device device;
-			public RoomState room;
 		}
 
 		public class UserCount
@@ -162,8 +164,8 @@ namespace VELConnect
 
 		private void Awake()
 		{
-			if (_instance != null) Debug.LogError("VELConnectManager instance already exists", this);
-			_instance = this;
+			if (instance != null) Debug.LogError("VELConnectManager instance already exists", this);
+			instance = this;
 
 			// Compute device id
 			MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
@@ -220,10 +222,11 @@ namespace VELConnect
 					version = Application.version,
 					platform = SystemInfo.operatingSystem,
 				};
-				PostRequestCallback(velConnectUrl + "/api/collections/UserCount/records", JsonConvert.SerializeObject(postData, Formatting.None, new JsonSerializerSettings
-				{
-					NullValueHandling = NullValueHandling.Ignore
-				}));
+				PostRequestCallback(velConnectUrl + "/api/collections/UserCount/records", JsonConvert.SerializeObject(
+					postData, Formatting.None, new JsonSerializerSettings
+					{
+						NullValueHandling = NullValueHandling.Ignore
+					}));
 			});
 		}
 
@@ -233,7 +236,7 @@ namespace VELConnect
 			{
 				try
 				{
-					GetRequestCallback(velConnectUrl + "/state/device/" + deviceId, json =>
+					GetRequestCallback(velConnectUrl + "/state/" + deviceId, json =>
 					{
 						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
@@ -305,12 +308,12 @@ namespace VELConnect
 								}
 							}
 
-							if (state.device.data != null)
+							if (state.device.deviceData.data != null)
 							{
-								foreach (KeyValuePair<string, string> elem in state.device.data)
+								foreach (KeyValuePair<string, string> elem in state.device.deviceData.data)
 								{
 									string oldValue = null;
-									lastState?.device?.data?.TryGetValue(elem.Key, out oldValue);
+									lastState?.device?.deviceData?.data?.TryGetValue(elem.Key, out oldValue);
 									if (elem.Value != oldValue)
 									{
 										try
@@ -430,10 +433,10 @@ namespace VELConnect
 
 			if (sendInitialState)
 			{
-				if (_instance != null && _instance.lastState?.device != null)
+				if (instance != null && instance.lastState?.device != null)
 				{
-					if (_instance.lastState.device.GetType().GetField(key)
-						    ?.GetValue(_instance.lastState.device) is string val)
+					if (instance.lastState.device.GetType().GetField(key)
+						    ?.GetValue(instance.lastState.device) is string val)
 					{
 						try
 						{
@@ -520,12 +523,12 @@ namespace VELConnect
 
 		public static string GetDeviceData(string key)
 		{
-			return _instance != null ? _instance.lastState?.device?.TryGetData(key) : null;
+			return instance != null ? instance.lastState?.device?.TryGetData(key) : null;
 		}
 
 		public static string GetRoomData(string key)
 		{
-			return _instance != null ? _instance.lastState?.room?.TryGetData(key) : null;
+			return instance != null ? instance.lastState?.room?.TryGetData(key) : null;
 		}
 
 		/// <summary>
@@ -536,18 +539,18 @@ namespace VELConnect
 		{
 			device[DeviceField.last_online] = DateTime.UtcNow.ToLongDateString();
 
-			if (_instance.state?.device != null)
+			if (instance.state?.device != null)
 			{
 				// loop through all the fields in the device
 				foreach (DeviceField key in device.Keys.ToArray())
 				{
-					FieldInfo field = _instance.state.device.GetType().GetField(key.ToString());
-					if ((string)field.GetValue(_instance.state.device) != device[key])
+					FieldInfo field = instance.state.device.GetType().GetField(key.ToString());
+					if ((string)field.GetValue(instance.state.device) != device[key])
 					{
-						if (_instance.lastState?.device != null)
+						if (instance.lastState?.device != null)
 						{
 							// update our local state, so we don't get change events on our own updates
-							field.SetValue(_instance.lastState.device, device[key]);
+							field.SetValue(instance.lastState.device, device[key]);
 						}
 					}
 					else
@@ -566,7 +569,7 @@ namespace VELConnect
 			}
 
 			PostRequestCallback(
-				_instance.velConnectUrl + "/device/" + deviceId,
+				instance.velConnectUrl + "/device/" + deviceId,
 				JsonConvert.SerializeObject(device)
 			);
 		}
@@ -576,21 +579,21 @@ namespace VELConnect
 		/// </summary>
 		public static void SetDeviceData(Dictionary<string, string> data)
 		{
-			if (_instance.state?.device != null)
+			if (instance.state?.device != null)
 			{
 				foreach (string key in data.Keys.ToList())
 				{
 					// if the value is unchanged from the current state, remove it so we don't double-update
-					if (_instance.state.device.data.TryGetValue(key, out string val) && val == data[key])
+					if (instance.state.device.deviceData.data.TryGetValue(key, out string val) && val == data[key])
 					{
 						data.Remove(key);
 					}
 					else
 					{
 						// update our local state, so we don't get change events on our own updates
-						if (_instance.lastState?.device?.data != null)
+						if (instance.lastState?.device?.deviceData?.data != null)
 						{
-							_instance.lastState.device.data[key] = data[key];
+							instance.lastState.device.deviceData.data[key] = data[key];
 						}
 					}
 				}
@@ -602,7 +605,7 @@ namespace VELConnect
 				}
 
 				// if we have no data, just set the whole thing
-				if (_instance.lastState?.device != null) _instance.lastState.device.data ??= data;
+				if (instance.lastState?.device?.deviceData != null) instance.lastState.device.deviceData.data ??= data;
 			}
 
 
@@ -613,7 +616,7 @@ namespace VELConnect
 			};
 
 			PostRequestCallback(
-				_instance.velConnectUrl + "/device/" + deviceId,
+				instance.velConnectUrl + "/device/" + deviceId,
 				JsonConvert.SerializeObject(device, Formatting.None, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore
@@ -634,19 +637,18 @@ namespace VELConnect
 				return;
 			}
 
-			State.RoomState room = new State.RoomState
+			State.DataBlock room = new State.DataBlock
 			{
 				category = "room",
-				visibility = "public",
 				data = data
 			};
 
 			// remove keys that already match our current state
-			if (_instance.state?.room != null)
+			if (instance.state?.room != null)
 			{
 				foreach (string key in data.Keys.ToArray())
 				{
-					if (_instance.state.room.data[key] == data[key])
+					if (instance.state.room.data[key] == data[key])
 					{
 						data.Remove(key);
 					}
@@ -660,16 +662,16 @@ namespace VELConnect
 			}
 
 			// update our local state, so we don't get change events on our own updates
-			if (_instance.lastState?.room != null)
+			if (instance.lastState?.room != null)
 			{
 				foreach (KeyValuePair<string, string> kvp in data)
 				{
-					_instance.lastState.room.data[kvp.Key] = kvp.Value;
+					instance.lastState.room.data[kvp.Key] = kvp.Value;
 				}
 			}
 
 			PostRequestCallback(
-				_instance.velConnectUrl + "/data_block/" + Application.productName + "_" + VelNetManager.Room,
+				instance.velConnectUrl + "/data_block/" + Application.productName + "_" + VelNetManager.Room,
 				JsonConvert.SerializeObject(room, Formatting.None, new JsonSerializerSettings
 				{
 					NullValueHandling = NullValueHandling.Ignore
@@ -727,7 +729,7 @@ namespace VELConnect
 		public static void GetRequestCallback(string url, Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
-			_instance.StartCoroutine(_instance.GetRequestCallbackCo(url, successCallback, failureCallback));
+			instance.StartCoroutine(instance.GetRequestCallbackCo(url, successCallback, failureCallback));
 		}
 
 		private IEnumerator GetRequestCallbackCo(string url, Action<string> successCallback = null,
@@ -755,7 +757,7 @@ namespace VELConnect
 			Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
-			_instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
+			instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
 		}
 
 

@@ -38,40 +38,30 @@ func main() {
 
 			// get the old value to do a merge
 			record, err := dao.FindFirstRecordByData("DataBlock", "block_id", c.PathParam("block_id"))
-			if err == nil {
-				mergeDataBlock(requestData, record)
-			} else {
-
+			if err != nil {
+				// create a new record if needed
 				collection, err := dao.FindCollectionByNameOrId("DataBlock")
 				if err != nil {
 					return err
 				}
 
 				record = models.NewRecord(collection)
-
-				// we don't have an existing data, so just set the new values
-				if val, ok := requestData.Data["data"]; ok {
-					record.Set("data", val)
-				}
+				record.Set("data", "{}")
 			}
 
 			// add the new values
 			record.Set("block_id", c.PathParam("block_id"))
 			fields := []string{
-				"owner_id",
-				"visibility",
+				"owner",
 				"category",
+				"modfied_by",
 			}
 			for _, v := range fields {
 				if val, ok := requestData.Data[v]; ok {
 					record.Set(v, val)
 				}
 			}
-
-			// double-check that data is not null
-			if (record.Get("data") == nil) || (record.Get("data") == "") {
-				record.Set("data", "{}")
-			}
+			mergeDataBlock(requestData, record)
 
 			// apply to the db
 			if err := dao.SaveRecord(record); err != nil {
@@ -98,32 +88,46 @@ func main() {
 			apis.ActivityLogger(app),
 		)
 
+		// This is used by Unity itself for device-centric data getting/setting
 		e.Router.POST("/device/:device_id", func(c echo.Context) error {
 
 			dao := app.Dao()
 			requestData := apis.RequestData(c)
 
-			// get the old value to do a merge
-			record, err := dao.FindFirstRecordByData("Device", "device_id", c.PathParam("device_id"))
-			if err == nil {
-				mergeDataBlock(requestData, record)
-			} else {
+			// get the existing device (by device id)
+			deviceRecord, err := dao.FindRecordById("Device", c.PathParam("device_id"))
 
+			// if no device, create one
+			if err != nil {
 				collection, err := dao.FindCollectionByNameOrId("Device")
 				if err != nil {
+					log.Fatalln("Couldn't create device")
 					return err
 				}
 
-				record = models.NewRecord(collection)
+				deviceRecord = models.NewRecord(collection)
+				deviceRecord.SetId(c.PathParam("device_id"))
+			}
+			log.Println(deviceRecord.PublicExport())
 
-				// we don't have an existing data, so just set the new values
-				if val, ok := requestData.Data["data"]; ok {
-					record.Set("data", val)
+			// get the device data block
+			deviceDataRecord, err := dao.FindRecordById("DataBlock", deviceRecord.GetString("data"))
+			if err != nil {
+				collection, err := dao.FindCollectionByNameOrId("DataBlock")
+				if err != nil {
+					log.Fatalln("Couldn't create datablock")
+					return err
 				}
+
+				deviceDataRecord = models.NewRecord(collection)
+				deviceDataRecord.RefreshId()
+				deviceRecord.Set("data", deviceDataRecord.Id)
+				deviceDataRecord.Set("category", "device")
+				deviceDataRecord.Set("data", "{}")
 			}
 
-			// add the new values
-			record.Set("device_id", c.PathParam("device_id"))
+			// add the new device values
+			deviceRecord.Set("device_id", c.PathParam("device_id"))
 			fields := []string{
 				"os_info",
 				"friendly_name",
@@ -135,51 +139,54 @@ func main() {
 			}
 			for _, v := range fields {
 				if val, ok := requestData.Data[v]; ok {
-					record.Set(v, val)
+					deviceRecord.Set(v, val)
 				}
 			}
 
-			// double-check that data is not null
-			if (record.Get("data") == nil) || (record.Get("data") == "") {
-				record.Set("data", "{}")
-			}
+			mergeDataBlock(requestData, deviceDataRecord)
 
 			// apply to the db
-			if err := dao.SaveRecord(record); err != nil {
+			if err := dao.SaveRecord(deviceRecord); err != nil {
+				return err
+			}
+			if err := dao.SaveRecord(deviceDataRecord); err != nil {
 				return err
 			}
 
-			return c.JSON(http.StatusOK, record)
+			return c.JSON(http.StatusOK, deviceRecord)
 		},
 			apis.ActivityLogger(app),
 		)
 
-		e.Router.GET("/device/:device_id", func(c echo.Context) error {
-			record, err := app.Dao().FindFirstRecordByData("Device", "device_id", c.PathParam("device_id"))
-			if err != nil {
-				return apis.NewNotFoundError("The device does not exist.", err)
-			}
+		// e.Router.GET("/device/:device_id", func(c echo.Context) error {
+		// 	record, err := app.Dao().FindFirstRecordByData("Device", "device_id", c.PathParam("device_id"))
+		// 	if err != nil {
+		// 		return apis.NewNotFoundError("The device does not exist.", err)
+		// 	}
 
-			// enable ?expand query param support
-			apis.EnrichRecord(c, app.Dao(), record)
+		// 	// enable ?expand query param support
+		// 	apis.EnrichRecord(c, app.Dao(), record)
 
-			return c.JSON(http.StatusOK, record)
-		},
-			apis.ActivityLogger(app),
-		)
+		// 	return c.JSON(http.StatusOK, record)
+		// },
+		// 	apis.ActivityLogger(app),
+		// )
 
 		// gets all relevant tables for this device id
-		e.Router.GET("/state/device/:device_id", func(c echo.Context) error {
-			record, err := app.Dao().FindFirstRecordByData("Device", "device_id", c.PathParam("device_id"))
+		e.Router.GET("/state/:device_id", func(c echo.Context) error {
+			deviceRecord, err := app.Dao().FindRecordById("Device", c.PathParam("device_id"))
 			if err != nil {
 				return apis.NewNotFoundError("The device does not exist.", err)
 			}
 
-			room, _ := app.Dao().FindFirstRecordByData("DataBlock", "block_id", record.GetString("current_room"))
+			apis.EnrichRecord(c, app.Dao(), deviceRecord, "data")
+			room, _ := app.Dao().FindFirstRecordByData("DataBlock", "block_id", deviceRecord.GetString("current_room"))
+			user, _ := app.Dao().FindRecordById("Users", deviceRecord.GetString("owner"))
 
 			output := map[string]interface{}{
-				"device": record,
+				"device": deviceRecord,
 				"room":   room,
+				"user":   user,
 			}
 
 			return c.JSON(http.StatusOK, output)

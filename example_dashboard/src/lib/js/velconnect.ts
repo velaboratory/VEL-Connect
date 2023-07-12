@@ -24,7 +24,7 @@ export interface DeviceData extends Record {
 	current_app: string;
 	data: { [key: string]: string };
 }
-export interface RoomData extends HasData {}
+export interface RoomData extends HasData { }
 
 const device = get(currentDevice);
 if (device == '' && device.length > 0) {
@@ -149,5 +149,36 @@ export function removeDevice(d: string) {
 	if (user) {
 		user.devices.filter((i: string) => i != d);
 		pb.collection('Users').update(user.id, user);
+	}
+}
+
+export async function pair(pairingCode: string) {
+	// find the device by pairing code
+	try {
+		let device = (await pb
+			.collection('Device')
+			.getFirstListItem(`pairing_code="${pairingCode}"`)) as DeviceData;
+
+		// add it to the local data
+		currentDevice.set(device.id);
+		pairedDevices.set([...get(pairedDevices), device.id]);
+
+		// add it to my account if logged in
+		const u = get(currentUser)
+		if (u) {
+			u.devices.push(device.id);
+			await pb.collection('Users').update(u.id, u);
+		}
+		return { error: null }
+	} catch (e) {
+		console.error('Not found: ' + e);
+		if (e == "ClientResponseError 404: The requested resource wasn't found.") {
+			return {
+				error: 'Device not found with this pairing code.'
+			}
+		}
+		return {
+			error: e
+		}
 	}
 }
