@@ -3,7 +3,8 @@ import { writable } from 'svelte/store';
 import { type Record } from 'pocketbase';
 import { get } from 'svelte/store';
 
-export const pb = new PocketBase('http://127.0.0.1:8090');
+export const pb = new PocketBase('https://velconnect-v3.ugavel.com');
+// export const pb = new PocketBase('http://localhost:8090/_');
 
 export const currentUser = writable(pb.authStore.model);
 
