@@ -50,7 +50,7 @@ namespace VELConnect
 				[CanBeNull] public string pairing_code;
 				[CanBeNull] public string last_online;
 				[CanBeNull] public DeviceExpand expand;
-				public DataBlock deviceData => expand.data;
+				public DataBlock deviceData => expand?.data;
 
 				public class DeviceExpand
 				{
@@ -175,7 +175,7 @@ namespace VELConnect
 			// allows running multiple builds on the same computer
 			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
 			sb.Append(Application.dataPath);
-			sb.Append("EDITOR");
+			sb.Append("EDITOR2");
 #endif
 			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
 			deviceId = id[..15];
@@ -349,6 +349,32 @@ namespace VELConnect
 										}
 									}
 								}
+
+								// on the initial state, also activate callbacks for null values
+								if (isInitialState)
+								{
+									foreach ((string deviceDataKey, List<CallbackListener> callbackList) in deviceDataCallbacks)
+									{
+										if (!state.device.deviceData.data.ContainsKey(deviceDataKey))
+										{
+											// send the callbacks
+											callbackList.ForEach(e =>
+											{
+												if (e.sendInitialState)
+												{
+													try
+													{
+														e.callback(null);
+													}
+													catch (Exception ex)
+													{
+														Debug.LogError(ex);
+													}
+												}
+											});
+										}
+									}
+								}
 							}
 						}
 
@@ -384,6 +410,32 @@ namespace VELConnect
 												try
 												{
 													e.callback(elem.Value);
+												}
+												catch (Exception ex)
+												{
+													Debug.LogError(ex);
+												}
+											}
+										});
+									}
+								}
+							}
+
+							// on the initial state, also activate callbacks for null values
+							if (isInitialState)
+							{
+								foreach ((string key, List<CallbackListener> callbackList) in roomDataCallbacks)
+								{
+									if (!state.room.data.ContainsKey(key))
+									{
+										// send the callbacks
+										callbackList.ForEach(e =>
+										{
+											if (e.sendInitialState)
+											{
+												try
+												{
+													e.callback(null);
 												}
 												catch (Exception ex)
 												{
@@ -453,6 +505,7 @@ namespace VELConnect
 
 		/// <summary>
 		/// Adds a change listener callback to a particular field name within the Device data JSON.
+		/// If the initial state doesn't contain this key, this sends back null
 		/// </summary>
 		public static void AddDeviceDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
 			bool sendInitialState = false)
@@ -469,25 +522,24 @@ namespace VELConnect
 				sendInitialState = sendInitialState
 			});
 
-			if (sendInitialState)
+			// if we have already received data, and we should send right away
+			if (sendInitialState && instance.state != null)
 			{
 				string val = GetDeviceData(key);
-				if (val != null)
+				try
 				{
-					try
-					{
-						callback(val);
-					}
-					catch (Exception e)
-					{
-						Debug.LogError(e);
-					}
+					callback(val);
+				}
+				catch (Exception e)
+				{
+					Debug.LogError(e);
 				}
 			}
 		}
 
 		/// <summary>
 		/// Adds a change listener callback to a particular field name within the Room data JSON.
+		/// If the initial state doesn't contain this key, this sends back null
 		/// </summary>
 		public static void AddRoomDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
 			bool sendInitialState = false)
@@ -504,31 +556,29 @@ namespace VELConnect
 				sendInitialState = sendInitialState
 			});
 
-			if (sendInitialState)
+			// if we have already received data, and we should send right away
+			if (sendInitialState && instance.state != null)
 			{
 				string val = GetRoomData(key);
-				if (val != null)
+				try
 				{
-					try
-					{
-						callback(val);
-					}
-					catch (Exception e)
-					{
-						Debug.LogError(e);
-					}
+					callback(val);
+				}
+				catch (Exception e)
+				{
+					Debug.LogError(e);
 				}
 			}
 		}
 
-		public static string GetDeviceData(string key)
+		public static string GetDeviceData(string key, string defaultValue = null)
 		{
-			return instance != null ? instance.lastState?.device?.TryGetData(key) : null;
+			return instance != null ? instance.lastState?.device?.TryGetData(key) : defaultValue;
 		}
 
-		public static string GetRoomData(string key)
+		public static string GetRoomData(string key, string defaultValue = null)
 		{
-			return instance != null ? instance.lastState?.room?.TryGetData(key) : null;
+			return instance != null ? instance.lastState?.room?.TryGetData(key) : defaultValue;
 		}
 
 		/// <summary>
@@ -769,6 +819,7 @@ namespace VELConnect
 			byte[] bodyRaw = Encoding.UTF8.GetBytes(postData);
 			UploadHandlerRaw uploadHandler = new UploadHandlerRaw(bodyRaw);
 			webRequest.uploadHandler = uploadHandler;
+			webRequest.downloadHandler = new DownloadHandlerBuffer();
 			webRequest.SetRequestHeader("Content-Type", "application/json");
 			if (headers != null)
 			{

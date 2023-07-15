@@ -96,11 +96,21 @@
 		<h3>Settings</h3>
 
 		<label>
-			User Name
+			Device Name
 			<input
 				type="text"
-				placeholder="Enter username..."
+				placeholder="Enter friendly device name..."
 				bind:value={$deviceFields.friendly_name}
+				on:input={delayedSend}
+			/>
+		</label>
+		
+		<label>
+			Nickname
+			<input
+				type="text"
+				placeholder="Enter nickname..."
+				bind:value={$deviceData.data.nickname}
 				on:input={delayedSend}
 			/>
 		</label>

@@ -147,10 +147,12 @@ func main() {
 
 			// apply to the db
 			if err := dao.SaveRecord(deviceRecord); err != nil {
-				return err
+				log.Fatalln(err)
+				return c.String(500, err.Error())
 			}
 			if err := dao.SaveRecord(deviceDataRecord); err != nil {
-				return err
+				log.Fatalln(err)
+				return c.String(500, err.Error())
 			}
 
 			return c.JSON(http.StatusOK, deviceRecord)
@@ -180,11 +182,11 @@ func main() {
 			}
 
 			apis.EnrichRecord(c, app.Dao(), deviceRecord, "data")
-			room, roomErr := app.Dao().FindFirstRecordByData("DataBlock", "block_id", deviceRecord.GetString("current_app")+"_"+deviceRecord.GetString("current_room"))
+			room, _ := app.Dao().FindFirstRecordByData("DataBlock", "block_id", deviceRecord.GetString("current_app")+"_"+deviceRecord.GetString("current_room"))
 			user, _ := app.Dao().FindRecordById("Users", deviceRecord.GetString("owner"))
 
-			log.Println(deviceRecord.GetString("current_room"))
-			log.Println(roomErr)
+			// log.Println(deviceRecord.GetString("current_room"))
+			// log.Println(roomErr)
 
 			output := map[string]interface{}{
 				"device": deviceRecord,

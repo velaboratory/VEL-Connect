@@ -3,6 +3,12 @@ import { writable } from "svelte/store";
 import type { Record } from "pocketbase";
 import { get } from "svelte/store";
 
+let debugLog = false;
+
+export function setDebugLog(val: boolean) {
+  debugLog = val;
+}
+
 export const pb = new PocketBase();
 
 export const currentUser = writable(pb.authStore.model);
@@ -27,6 +33,8 @@ export interface Device extends Record {
   expand: { data?: DataBlock };
 }
 export interface DataBlock extends Record {
+  block_id: string;
+  owner: string;
   data: { [key: string]: string };
 }
 
@@ -53,30 +61,45 @@ export async function startListening(baseUrl: string) {
     const d = (await pb.collection("Device").getOne(get(currentDeviceId), {
       expand: "data",
     })) as Device;
-    deviceFields.set(d);
     deviceData.set(d.expand.data as DataBlock);
+    // we don't need expand anymore, since it doesn't work in subscribe()
+    d.expand = {};
+    deviceFields.set(d);
   }
 
   unsubscribeCurrentDevice = currentDeviceId.subscribe(async (val) => {
-    console.log("current device changed");
+    log("currentDeviceId subscribe change event");
     unsubscribeDeviceFields?.();
     unsubscribeDeviceData?.();
     if (val != "") {
       const d = (await pb
         .collection("Device")
         .getOne(get(currentDeviceId), { expand: "data" })) as Device;
-      deviceFields.set(d);
       deviceData.set(d.expand.data as DataBlock);
+      // we don't need expand anymore, since it doesn't work in subscribe()
+      d.expand = {};
+      deviceFields.set(d);
+
+      unsubscribeDeviceData = await pb
+        .collection("DataBlock")
+        .subscribe(d.data, async (data) => {
+          log("deviceData subscribe change event");
+          deviceData.set(data.record as DataBlock);
+        });
 
       unsubscribeDeviceFields = await pb
         .collection("Device")
         .subscribe(val, async (data) => {
+          log("deviceFields subscribe change event");
           const d = data.record as Device;
           deviceFields.set(d);
 
+          // if the devie changes, the devicedata could change, so we need to resubscribe
+          unsubscribeDeviceData?.();
           unsubscribeDeviceData = await pb
             .collection("DataBlock")
-            .subscribe(d.id, async (data) => {
+            .subscribe(d.data, async (data) => {
+              log("deviceData subscribe change event");
               deviceData.set(data.record as DataBlock);
             });
 
@@ -92,6 +115,7 @@ export async function startListening(baseUrl: string) {
   });
 
   unsubscribeCurrentUser = currentUser.subscribe((user) => {
+    log(`currentUser changed ${user}`);
     pairedDevices.set(user?.["devices"] ?? []);
     currentDeviceId.set(get(pairedDevices)[0] ?? "");
   });
@@ -110,16 +134,26 @@ async function getRoomData(device: Device) {
   unsubscribeRoomData?.();
 
   // create or just fetch room by name
-  const r = (await pb
-    .collection("DataBlock")
-    .getFirstListItem(
-      `block_id="${device.current_app}_${device.current_room}"`
-    )) as DataBlock;
+  let r: DataBlock | null = null;
+  try {
+    r = (await pb
+      .collection("DataBlock")
+      .getFirstListItem(
+        `block_id="${device.current_app}_${device.current_room}"`
+      )) as DataBlock;
+  } catch (e: any) {
+    r = (await pb.collection("DataBlock").create({
+      block_id: `${device.current_app}_${device.current_room}`,
+      category: "room",
+      data: {},
+    })) as DataBlock;
+  }
   roomData.set(r);
-  if (r) {
+  if (r != null) {
     unsubscribeRoomData = await pb
       .collection("DataBlock")
       .subscribe(r.id, (data) => {
+        log("roomData subscribe change event");
         roomData.set(data.record as DataBlock);
       });
   } else {
@@ -148,9 +182,10 @@ export function send() {
   console.log("sending...");
   sending = true;
   let promises: Promise<any>[] = [];
-  const room = get(roomData);
   const device = get(deviceFields);
   const data = get(deviceData);
+  const room = get(roomData);
+  // TODO send changes only
   if (device) {
     promises.push(pb.collection("Device").update(device.id, device));
   }
@@ -195,7 +230,9 @@ export async function pair(pairingCode: string) {
 
     // add it to the local data
     currentDeviceId.set(device.id);
-    pairedDevices.set([...get(pairedDevices), device.id]);
+    if (!get(pairedDevices).includes(device.id)) {
+      pairedDevices.set([...get(pairedDevices), device.id]);
+    }
 
     // add it to my account if logged in
     const u = get(currentUser);
@@ -242,26 +279,32 @@ export async function pair(pairingCode: string) {
 export async function login(username: string, password: string) {
   try {
     await pb.collection("Users").authWithPassword(username, password);
-    return "";
-  } catch (err) {
-    return err as string;
+    return {};
+  } catch (err: any) {
+    return err;
   }
 }
 
 export async function signUp(username: string, password: string) {
   try {
     const data = {
-      email: username,
+      username: username,
       password,
       passwordConfirm: password,
     };
     await pb.collection("Users").create(data);
     return await login(username, password);
-  } catch (err) {
-    return err as string;
+  } catch (err: any) {
+    return err;
   }
 }
 
 export function signOut() {
   pb.authStore.clear();
+}
+
+function log(msg: string) {
+  if (debugLog) {
+    console.log(msg);
+  }
 }
