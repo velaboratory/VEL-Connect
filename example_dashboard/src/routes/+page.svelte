@@ -1,22 +1,24 @@
 <script lang="ts">
 	import {
-		currentDevice,
+		currentDeviceId,
+		currentUser,
 		delayedSend,
 		deviceData,
+		deviceFields,
 		pairedDevices,
 		removeDevice,
 		roomData,
 		sending,
 		startListening,
 		stopListening
-	} from '$lib/js/velconnect';
+	} from '@velaboratory/velconnect-svelte';
 	import Login from '$lib/components/Login.svelte';
 	import Pair from '$lib/components/Pair.svelte';
 	import { prettyDate } from '$lib/js/util';
 	import { onDestroy, onMount } from 'svelte';
 
 	onMount(async () => {
-		await startListening();
+		await startListening('http://localhost:8090');
 	});
 	onDestroy(() => {
 		stopListening();
@@ -30,8 +32,9 @@
 <h1>VEL-Connect</h1>
 <img src="/img/velconnect_logo_1.png" alt="logo" width="70px" height="28px" />
 <p>
-	This is a demo dashboard. Visit the <a href="https://github.com/velaboratory/VEL-Connect"
-		>GitHub repo</a
+	This is a demo dashboard. Visit the <a
+		href="https://github.com/velaboratory/VEL-Connect"
+		target="_blank">GitHub repo</a
 	> to copy it and make your own.
 </p>
 
@@ -45,7 +48,7 @@
 			<div>
 				<button
 					on:click={() => {
-						currentDevice.set(d);
+						currentDeviceId.set(d);
 					}}>{d}</button
 				>
 				<button
@@ -67,25 +70,25 @@
 	</div>
 {/if}
 
-{#if $deviceData != null && $deviceData.data != null}
+{#if $deviceFields != null && $deviceData != null}
 	<div>
 		<h3>Device Info</h3>
 
 		<device-field>
 			<h6>Device ID:</h6>
-			<code>{$deviceData.id}</code>
+			<code>{$deviceFields.id}</code>
 		</device-field>
 		<device-field>
 			<h6>Pairing Code:</h6>
-			<code>{$deviceData.pairing_code}</code>
+			<code>{$deviceFields.pairing_code}</code>
 		</device-field>
 		<device-field>
 			<h6>First Seen</h6>
-			<p>{prettyDate($deviceData.created)}</p>
+			<p>{prettyDate($deviceFields.created)}</p>
 		</device-field>
 		<device-field>
 			<h6>Last Seen</h6>
-			<p>{prettyDate($deviceData.updated)}</p>
+			<p>{prettyDate($deviceFields.updated)}</p>
 		</device-field>
 	</div>
 
@@ -97,7 +100,7 @@
 			<input
 				type="text"
 				placeholder="Enter username..."
-				bind:value={$deviceData.friendly_name}
+				bind:value={$deviceFields.friendly_name}
 				on:input={delayedSend}
 			/>
 		</label>
@@ -123,7 +126,7 @@
 
 		<device-field>
 			<h6>Current Room</h6>
-			<a href="/join/{$deviceData.current_app}/room_name" target="blank">
+			<a href="/join/{$deviceFields.current_app}/room_name" target="blank">
 				Shareable Link
 				<svg style="width:1em;height:1em;margin-bottom:-.15em;" viewBox="0 0 24 24">
 					<path
@@ -135,13 +138,17 @@
 			<input
 				type="text"
 				placeholder="room_1"
-				bind:value={$deviceData.current_room}
+				bind:value={$deviceFields.current_room}
 				on:input={delayedSend}
 			/>
 		</device-field>
 	</div>
 
 	<h3>Raw JSON:</h3>
+	<h6>User</h6>
+	<pre><code>{JSON.stringify($currentUser, null, 2)}</code></pre>
+	<h6>Device</h6>
+	<pre><code>{JSON.stringify($deviceFields, null, 2)}</code></pre>
 	<h6>Device Data</h6>
 	<pre><code>{JSON.stringify($deviceData, null, 2)}</code></pre>
 	<h6>Room Data</h6>

@@ -16,3 +16,4 @@ velconnect*.db
 .idea/
 velconnect/data/
 *.db.bak
+

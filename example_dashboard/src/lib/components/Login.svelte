@@ -1,44 +1,34 @@
 <script lang="ts">
-	import { currentUser, pb } from '$lib/js/velconnect';
+	import { currentUser, signUp, signOut, login } from '@velaboratory/velconnect-svelte';
 
-	let email: string;
+	let username: string;
 	let password: string;
-
-	async function login() {
-		const user = await pb.collection('Users').authWithPassword(email, password);
-		console.log(user);
-	}
-
-	async function signUp() {
-		try {
-			const data = {
-				email,
-				password,
-				passwordConfirm: password
-			};
-			const createdUser = await pb.collection('Users').create(data);
-			await login();
-		} catch (err) {
-			console.error(err);
-		}
-	}
-
-	function signOut() {
-		pb.authStore.clear();
-	}
+	let errorMessage = '';
 </script>
 
 {#if $currentUser}
 	<p>
-		Signed in as {$currentUser.email}
+		Signed in as {$currentUser.username}
 		<button on:click={signOut}>Sign Out</button>
 	</p>
 {:else}
 	<form on:submit|preventDefault>
-		<input placeholder="Email" type="text" bind:value={email} />
+		<input placeholder="Username" type="text" bind:value={username} />
 
 		<input placeholder="Password" type="password" bind:value={password} />
-		<button on:click={signUp}>Sign Up</button>
-		<button on:click={login}>Login</button>
+		<button
+			on:click={() => {
+				signUp(username, password);
+			}}>Sign Up</button
+		>
+		<button
+			on:click={() => {
+				login(username, password);
+			}}>Login</button
+		>
+		<p class="error">{errorMessage}</p>
 	</form>
 {/if}
+
+<style>
+</style>

@@ -34,7 +34,7 @@ func main() {
 			dao := app.Dao()
 			requestData := apis.RequestData(c)
 
-			log.Println(requestData)
+			// log.Println(requestData)
 
 			// get the old value to do a merge
 			record, err := dao.FindFirstRecordByData("DataBlock", "block_id", c.PathParam("block_id"))
@@ -68,7 +68,7 @@ func main() {
 				return err
 			}
 
-			log.Println(record)
+			// log.Println(record)
 			return c.JSON(http.StatusOK, record)
 		},
 			apis.ActivityLogger(app),
@@ -108,7 +108,7 @@ func main() {
 				deviceRecord = models.NewRecord(collection)
 				deviceRecord.SetId(c.PathParam("device_id"))
 			}
-			log.Println(deviceRecord.PublicExport())
+			// log.Println(deviceRecord.PublicExport())
 
 			// get the device data block
 			deviceDataRecord, err := dao.FindRecordById("DataBlock", deviceRecord.GetString("data"))
@@ -180,8 +180,11 @@ func main() {
 			}
 
 			apis.EnrichRecord(c, app.Dao(), deviceRecord, "data")
-			room, _ := app.Dao().FindFirstRecordByData("DataBlock", "block_id", deviceRecord.GetString("current_room"))
+			room, roomErr := app.Dao().FindFirstRecordByData("DataBlock", "block_id", deviceRecord.GetString("current_app")+"_"+deviceRecord.GetString("current_room"))
 			user, _ := app.Dao().FindRecordById("Users", deviceRecord.GetString("owner"))
+
+			log.Println(deviceRecord.GetString("current_room"))
+			log.Println(roomErr)
 
 			output := map[string]interface{}{
 				"device": deviceRecord,

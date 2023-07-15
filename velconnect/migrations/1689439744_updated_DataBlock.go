@@ -18,22 +18,18 @@ func init() {
 			return err
 		}
 
-		// add
-		new_block_id := &schema.SchemaField{}
+		// update
+		edit_data := &schema.SchemaField{}
 		json.Unmarshal([]byte(`{
 			"system": false,
-			"id": "vvqemti1",
-			"name": "block_id",
-			"type": "text",
-			"required": true,
+			"id": "mkzyfsng",
+			"name": "data",
+			"type": "json",
+			"required": false,
 			"unique": false,
-			"options": {
-				"min": null,
-				"max": null,
-				"pattern": ""
-			}
-		}`), new_block_id)
-		collection.Schema.AddField(new_block_id)
+			"options": {}
+		}`), edit_data)
+		collection.Schema.AddField(edit_data)
 
 		return dao.SaveCollection(collection)
 	}, func(db dbx.Builder) error {
@@ -44,8 +40,18 @@ func init() {
 			return err
 		}
 
-		// remove
-		collection.Schema.RemoveField("vvqemti1")
+		// update
+		edit_data := &schema.SchemaField{}
+		json.Unmarshal([]byte(`{
+			"system": false,
+			"id": "mkzyfsng",
+			"name": "data",
+			"type": "json",
+			"required": true,
+			"unique": false,
+			"options": {}
+		}`), edit_data)
+		collection.Schema.AddField(edit_data)
 
 		return dao.SaveCollection(collection)
 	})
