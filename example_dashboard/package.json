@@ -31,9 +31,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@velaboratory/velconnect-svelte": "^1.0.2",
-		"humanize-duration": "^3.28.0",
-		"luxon": "^3.3.0",
-		"pocketbase": "^0.15.2"
+		"@velaboratory/velconnect-svelte": "^1.0.2"
 	}
 }

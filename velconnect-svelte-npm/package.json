@@ -1,6 +1,6 @@
 {
   "name": "@velaboratory/velconnect-svelte",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Use VEL-Connect with a Svelte dashboard",
   "main": "src/index.js",
   "files": [
@@ -14,7 +14,8 @@
   "license": "MIT",
   "dependencies": {
     "pocketbase": "^0.15.3",
-    "svelte": "^4.0.5"
+    "svelte": "^4.0.5",
+    "@velaboratory/velconnect": "../velconnect-npm"
   },
   "devDependencies": {
     "typescript": "^5.1.6"

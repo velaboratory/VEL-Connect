@@ -242,9 +242,9 @@ export async function pair(pairingCode: string) {
 
       // add the account data to the device
       if (
-        u.user_data == null ||
-        u.user_data == undefined ||
-        u.user_data == ""
+        u["user_data"] == null ||
+        u["user_data"] == undefined ||
+        u["user_data"] == ""
       ) {
         // create a new user data block if it doesn't exist on the user already
         const userDataBlock = await pb.collection("DataBlock").create({
@@ -252,9 +252,9 @@ export async function pair(pairingCode: string) {
           data: {},
           owner: u.id,
         });
-        u.user_data = userDataBlock.id;
+        u["user_data"] = userDataBlock.id;
       }
-      device["data"] = u.user_data;
+      device["data"] = u["user_data"];
       device["owner"] = u.id;
       device["past_owners"] = [...device["past_owners"], u.id];
 
