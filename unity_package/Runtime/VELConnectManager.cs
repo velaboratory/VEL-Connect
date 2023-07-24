@@ -63,7 +63,8 @@ namespace VELConnect
 				/// </summary>
 				public string TryGetData(string key)
 				{
-					return deviceData.data?.TryGetValue(key, out string val) == true ? val : null;
+					string val = null;
+					return deviceData.data?.TryGetValue(key, out val) == true ? val : null;
 				}
 			}
 
