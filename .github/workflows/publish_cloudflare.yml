@@ -25,6 +25,10 @@ jobs:
       - name: Install Packages
         working-directory: ${{env.SUBFOLDER}}
         run: npm i
+      
+      - name: 'Create env file'
+        run: |
+          echo "${{ secrets.EXAMPLE_DASHBOARD_ENV }}" > .env
 
       - name: Build
         working-directory: ${{env.SUBFOLDER}}
