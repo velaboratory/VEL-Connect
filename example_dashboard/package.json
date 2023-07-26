@@ -33,6 +33,6 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@velaboratory/velconnect-svelte": "^1.0.3"
+		"@velaboratory/velconnect-svelte": "file:../velconnect-svelte-npm"
 	}
 }
