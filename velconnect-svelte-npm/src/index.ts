@@ -29,6 +29,7 @@ export interface Device extends Record {
   current_room: string;
   current_app: string;
   pairing_code: string;
+  last_online: string;
   data: string;
   expand: { data?: DataBlock };
 }
@@ -229,7 +230,6 @@ export async function pair(pairingCode: string) {
       .getFirstListItem(`pairing_code="${pairingCode}"`)) as Device;
 
     // add it to the local data
-    currentDeviceId.set(device.id);
     if (!get(pairedDevices).includes(device.id)) {
       pairedDevices.set([...get(pairedDevices), device.id]);
     }
@@ -261,6 +261,8 @@ export async function pair(pairingCode: string) {
       await pb.collection("Device").update(device.id, device);
       await pb.collection("Users").update(u.id, u);
     }
+
+    currentDeviceId.set(device.id);
 
     return { error: null };
   } catch (e) {

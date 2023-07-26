@@ -19,6 +19,7 @@ namespace VELConnect
 	public class VELConnectManager : MonoBehaviour
 	{
 		public string velConnectUrl = "http://localhost";
+		public static string VelConnectUrl => instance.velConnectUrl;
 		private static VELConnectManager instance;
 
 		public class State

@@ -2,7 +2,7 @@ name: Deploy to VelNet Oracle server (Pocketbase edition)
 
 on:
   push:
-    branches: ["feature/pocketbase-server"]
+    branches: ["main"]
     paths: ["velconnect/**"]
 jobs:
   run_pull:
