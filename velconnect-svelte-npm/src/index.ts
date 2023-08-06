@@ -49,8 +49,11 @@ let unsubscribeRoomData: () => void;
 let unsubscribeCurrentDevice: () => void;
 let unsubscribeCurrentUser: () => void;
 
+/** This is read-only data about the device */
 export let deviceFields = writable<Device | null>(null);
+/** This is a profile with custom data about a device config */
 export let deviceData = writable<DataBlock | null>(null);
+/** Data attached to a room */
 export let roomData = writable<DataBlock | null>(null);
 
 export let sending = false;
@@ -60,6 +63,7 @@ export async function startListening(baseUrl: string) {
   if (get(currentDeviceId) != "") {
     const d = (await pb.collection("Device").getOne(get(currentDeviceId), {
       expand: "data",
+      $cancelKey: "package",
     })) as Device;
     deviceData.set(d.expand.data as DataBlock);
     // we don't need expand anymore, since it doesn't work in subscribe()
@@ -67,14 +71,17 @@ export async function startListening(baseUrl: string) {
     deviceFields.set(d);
   }
 
+  log("Subscribing to currentDeviceId");
   unsubscribeCurrentDevice = currentDeviceId.subscribe(async (val) => {
-    log("currentDeviceId subscribe change event");
+    log(`currentDeviceId subscribe change event: ${val}`);
     unsubscribeDeviceFields?.();
     unsubscribeDeviceData?.();
     if (val != "") {
-      const d = (await pb
-        .collection("Device")
-        .getOne(get(currentDeviceId), { expand: "data" })) as Device;
+      log(`currentDeviceId is not empty`);
+      const d = (await pb.collection("Device").getOne(get(currentDeviceId), {
+        expand: "data",
+        $cancelKey: "package",
+      })) as Device;
       deviceData.set(d.expand.data as DataBlock);
       // we don't need expand anymore, since it doesn't work in subscribe()
       d.expand = {};
@@ -115,9 +122,10 @@ export async function startListening(baseUrl: string) {
   });
 
   unsubscribeCurrentUser = currentUser.subscribe((user) => {
-    log(`currentUser changed ${user}`);
+    log(`currentUser changed: ${JSON.stringify(user)}`);
     pairedDevices.set(user?.["devices"] ?? []);
     currentDeviceId.set(get(pairedDevices)[0] ?? "");
+    log("set current device to: " + get(currentDeviceId));
   });
 }
 
@@ -171,14 +179,14 @@ export function delayedSend() {
   abortController = newAbortController;
   setTimeout(() => {
     if (!newAbortController.signal.aborted) {
-      send();
+      sendNow();
     } else {
       console.log("aborted");
     }
   }, 1000);
 }
 
-export function send() {
+export function sendNow() {
   console.log("sending...");
   sending = true;
   let promises: Promise<any>[] = [];
@@ -201,6 +209,8 @@ export function send() {
 }
 
 export function removeDevice(d: string) {
+  log("Removing device...");
+
   pairedDevices.set(get(pairedDevices).filter((i) => i != d));
 
   if (get(currentDeviceId) == d) {
@@ -223,6 +233,8 @@ export function removeDevice(d: string) {
 
 export async function pair(pairingCode: string) {
   try {
+    log("Pairing...");
+
     // find the device by pairing code
     const device = (await pb
       .collection("Device")
@@ -278,10 +290,12 @@ export async function pair(pairingCode: string) {
 
 export async function login(username: string, password: string) {
   try {
-    await pb.collection("Users").authWithPassword(username, password);
-    return {};
-  } catch (err: any) {
-    return err;
+    const ret = await pb
+      .collection("Users")
+      .authWithPassword(username, password);
+    return { ret };
+  } catch (error: any) {
+    return { error };
   }
 }
 
@@ -301,6 +315,14 @@ export async function signUp(username: string, password: string) {
 
 export function signOut() {
   pb.authStore.clear();
+}
+
+export async function setDeviceData(data: { [key: string]: any }) {
+  const d = get(deviceData);
+  if (d) {
+    d.data = { ...d.data, ...data };
+    await pb.collection("DataBlock").update(d.id, d);
+  }
 }
 
 function log(msg: string) {
