@@ -16,9 +16,10 @@
 	import Pair from '$lib/components/Pair.svelte';
 	import { prettyDate } from '$lib/js/util';
 	import { onDestroy, onMount } from 'svelte';
+	import { PUBLIC_VELCONNECT_URL } from '$env/static/public';
 
 	onMount(async () => {
-		await startListening('http://localhost:8090');
+		await startListening(PUBLIC_VELCONNECT_URL);
 	});
 	onDestroy(() => {
 		stopListening();
@@ -104,7 +105,7 @@
 				on:input={delayedSend}
 			/>
 		</label>
-		
+
 		<label>
 			Nickname
 			<input

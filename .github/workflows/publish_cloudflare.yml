@@ -3,7 +3,6 @@ env:
 
 on:
   push:
-    branches: ["feature/pocketbase-server"]
     paths: ["example_dashboard/**"]
 
 jobs:
@@ -26,6 +25,11 @@ jobs:
       - name: Install Packages
         working-directory: ${{env.SUBFOLDER}}
         run: npm i
+      
+      - name: 'Create env file'
+        working-directory: ${{env.SUBFOLDER}}
+        run: |
+          echo "${{ secrets.EXAMPLE_DASHBOARD_ENV }}" > .env
 
       - name: Build
         working-directory: ${{env.SUBFOLDER}}
