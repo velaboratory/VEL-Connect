@@ -34,7 +34,7 @@ namespace VELConnect
 				public string id;
 				public string username;
 				public string created;
-				public string updted;
+				public string updated;
 			}
 
 			public class Device
@@ -42,7 +42,6 @@ namespace VELConnect
 				[CanBeNull] public readonly string id;
 				[CanBeNull] public string created = null;
 				[CanBeNull] public string updated = null;
-				[CanBeNull] public string device_id;
 				[CanBeNull] public string os_info;
 				[CanBeNull] public string friendly_name;
 				[CanBeNull] public string modified_by;
@@ -50,8 +49,10 @@ namespace VELConnect
 				[CanBeNull] public string current_room;
 				[CanBeNull] public string pairing_code;
 				[CanBeNull] public string last_online;
+				[CanBeNull] public string owner;
+				[CanBeNull] public string[] past_owners;
 				[CanBeNull] public DeviceExpand expand;
-				public DataBlock deviceData => expand?.data;
+				public DataBlock userData => expand?.data;
 
 				public class DeviceExpand
 				{
@@ -65,7 +66,7 @@ namespace VELConnect
 				public string TryGetData(string key)
 				{
 					string val = null;
-					return deviceData.data?.TryGetValue(key, out val) == true ? val : null;
+					return userData.data?.TryGetValue(key, out val) == true ? val : null;
 				}
 			}
 
@@ -107,28 +108,33 @@ namespace VELConnect
 
 		public enum DeviceField
 		{
-			device_id,
+			id,
 			os_info,
 			friendly_name,
 			modified_by,
 			current_app,
 			current_room,
 			pairing_code,
-			last_online
+			last_online,
+			data,
+			owner,
+			past_owners
 		}
 
-		public State lastState;
-		public State state;
+		private State lastState;
+		private State state;
+
+		[CanBeNull] public static State CurrentState => instance == null ? null : instance.state;
 
 		public static Action<State> OnInitialState;
-		public static Action<string, string> OnDeviceFieldChanged;
-		public static Action<string, object> OnDeviceDataChanged;
+		public static Action<DeviceField, string> OnDeviceFieldChanged;
+		public static Action<string, object> OnUserDataChanged;
 		public static Action<string, object> OnRoomDataChanged;
 
-		private static readonly Dictionary<string, List<CallbackListener>> deviceFieldCallbacks =
-			new Dictionary<string, List<CallbackListener>>();
+		private static readonly Dictionary<DeviceField, List<CallbackListener>> deviceFieldCallbacks =
+			new Dictionary<DeviceField, List<CallbackListener>>();
 
-		private static readonly Dictionary<string, List<CallbackListener>> deviceDataCallbacks =
+		private static readonly Dictionary<string, List<CallbackListener>> userDataCallbacks =
 			new Dictionary<string, List<CallbackListener>>();
 
 		private static readonly Dictionary<string, List<CallbackListener>> roomDataCallbacks =
@@ -274,11 +280,13 @@ namespace VELConnect
 								string oldValue = lastState != null
 									? fieldInfo.GetValue(lastState.device) as string
 									: null;
-								if (newValue != oldValue)
+
+								DeviceField fieldName;
+								if (Enum.TryParse(fieldInfo.Name, out fieldName) && newValue != oldValue)
 								{
 									try
 									{
-										if (!isInitialState) OnDeviceFieldChanged?.Invoke(fieldInfo.Name, newValue);
+										if (!isInitialState) OnDeviceFieldChanged?.Invoke(fieldName, newValue);
 									}
 									catch (Exception e)
 									{
@@ -286,13 +294,13 @@ namespace VELConnect
 									}
 
 									// send specific listeners data
-									if (deviceFieldCallbacks.ContainsKey(fieldInfo.Name))
+									if (deviceFieldCallbacks.ContainsKey(fieldName))
 									{
 										// clear the list of old listeners
-										deviceFieldCallbacks[fieldInfo.Name].RemoveAll(e => e.keepAliveObject == null);
+										deviceFieldCallbacks[fieldName].RemoveAll(e => e.keepAliveObject == null);
 
 										// send the callbacks
-										deviceFieldCallbacks[fieldInfo.Name].ForEach(e =>
+										foreach (CallbackListener e in deviceFieldCallbacks[fieldName])
 										{
 											if (!isInitialState || e.sendInitialState)
 											{
@@ -305,22 +313,22 @@ namespace VELConnect
 													Debug.LogError(ex);
 												}
 											}
-										});
+										}
 									}
 								}
 							}
 
-							if (state.device.deviceData.data != null)
+							if (state.device.userData.data != null)
 							{
-								foreach (KeyValuePair<string, string> elem in state.device.deviceData.data)
+								foreach (KeyValuePair<string, string> elem in state.device.userData.data)
 								{
 									string oldValue = null;
-									lastState?.device?.deviceData?.data?.TryGetValue(elem.Key, out oldValue);
+									lastState?.device?.userData?.data?.TryGetValue(elem.Key, out oldValue);
 									if (elem.Value != oldValue)
 									{
 										try
 										{
-											if (!isInitialState) OnDeviceDataChanged?.Invoke(elem.Key, elem.Value);
+											if (!isInitialState) OnUserDataChanged?.Invoke(elem.Key, elem.Value);
 										}
 										catch (Exception ex)
 										{
@@ -328,13 +336,13 @@ namespace VELConnect
 										}
 
 										// send specific listeners data
-										if (deviceDataCallbacks.ContainsKey(elem.Key))
+										if (userDataCallbacks.ContainsKey(elem.Key))
 										{
 											// clear the list of old listeners
-											deviceDataCallbacks[elem.Key].RemoveAll(e => e.keepAliveObject == null);
+											userDataCallbacks[elem.Key].RemoveAll(e => e.keepAliveObject == null);
 
 											// send the callbacks
-											deviceDataCallbacks[elem.Key].ForEach(e =>
+											foreach (CallbackListener e in userDataCallbacks[elem.Key])
 											{
 												if (!isInitialState || e.sendInitialState)
 												{
@@ -347,7 +355,7 @@ namespace VELConnect
 														Debug.LogError(ex);
 													}
 												}
-											});
+											}
 										}
 									}
 								}
@@ -355,9 +363,10 @@ namespace VELConnect
 								// on the initial state, also activate callbacks for null values
 								if (isInitialState)
 								{
-									foreach ((string deviceDataKey, List<CallbackListener> callbackList) in deviceDataCallbacks)
+									foreach ((string userDataKey, List<CallbackListener> callbackList) in
+									         userDataCallbacks)
 									{
-										if (!state.device.deviceData.data.ContainsKey(deviceDataKey))
+										if (!state.device.userData.data.ContainsKey(userDataKey))
 										{
 											// send the callbacks
 											callbackList.ForEach(e =>
@@ -470,7 +479,8 @@ namespace VELConnect
 		/// <summary>
 		/// Adds a change listener callback to a particular field name within the Device main fields.
 		/// </summary>
-		public static void AddDeviceFieldListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
+		public static void AddDeviceFieldListener(DeviceField key, MonoBehaviour keepAliveObject,
+			Action<string> callback,
 			bool sendInitialState = false)
 		{
 			if (!deviceFieldCallbacks.ContainsKey(key))
@@ -489,7 +499,7 @@ namespace VELConnect
 			{
 				if (instance != null && instance.lastState?.device != null)
 				{
-					if (instance.lastState.device.GetType().GetField(key)
+					if (instance.lastState.device.GetType().GetField(key.ToString())
 						    ?.GetValue(instance.lastState.device) is string val)
 					{
 						try
@@ -506,18 +516,18 @@ namespace VELConnect
 		}
 
 		/// <summary>
-		/// Adds a change listener callback to a particular field name within the Device data JSON.
+		/// Adds a change listener callback to a particular field name within the User data JSON.
 		/// If the initial state doesn't contain this key, this sends back null
 		/// </summary>
-		public static void AddDeviceDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
+		public static void AddUserDataListener(string key, MonoBehaviour keepAliveObject, Action<string> callback,
 			bool sendInitialState = false)
 		{
-			if (!deviceDataCallbacks.ContainsKey(key))
+			if (!userDataCallbacks.ContainsKey(key))
 			{
-				deviceDataCallbacks[key] = new List<CallbackListener>();
+				userDataCallbacks[key] = new List<CallbackListener>();
 			}
 
-			deviceDataCallbacks[key].Add(new CallbackListener()
+			userDataCallbacks[key].Add(new CallbackListener()
 			{
 				keepAliveObject = keepAliveObject,
 				callback = callback,
@@ -527,7 +537,7 @@ namespace VELConnect
 			// if we have already received data, and we should send right away
 			if (sendInitialState && instance.state != null)
 			{
-				string val = GetDeviceData(key);
+				string val = GetUserData(key);
 				try
 				{
 					callback(val);
@@ -573,7 +583,7 @@ namespace VELConnect
 			}
 		}
 
-		public static string GetDeviceData(string key, string defaultValue = null)
+		public static string GetUserData(string key, string defaultValue = null)
 		{
 			return instance != null ? instance.lastState?.device?.TryGetData(key) : defaultValue;
 		}
@@ -629,23 +639,23 @@ namespace VELConnect
 		/// <summary>
 		/// Sets the 'data' object of the Device table
 		/// </summary>
-		public static void SetDeviceData(Dictionary<string, string> data)
+		public static void SetUserData(Dictionary<string, string> data)
 		{
 			if (instance.state?.device != null)
 			{
 				foreach (string key in data.Keys.ToList())
 				{
 					// if the value is unchanged from the current state, remove it so we don't double-update
-					if (instance.state.device.deviceData.data.TryGetValue(key, out string val) && val == data[key])
+					if (instance.state.device.userData.data.TryGetValue(key, out string val) && val == data[key])
 					{
 						data.Remove(key);
 					}
 					else
 					{
 						// update our local state, so we don't get change events on our own updates
-						if (instance.lastState?.device?.deviceData?.data != null)
+						if (instance.lastState?.device?.userData?.data != null)
 						{
-							instance.lastState.device.deviceData.data[key] = data[key];
+							instance.lastState.device.userData.data[key] = data[key];
 						}
 					}
 				}
@@ -657,7 +667,7 @@ namespace VELConnect
 				}
 
 				// if we have no data, just set the whole thing
-				if (instance.lastState?.device?.deviceData != null) instance.lastState.device.deviceData.data ??= data;
+				if (instance.lastState?.device?.userData != null) instance.lastState.device.userData.data ??= data;
 			}
 
 
