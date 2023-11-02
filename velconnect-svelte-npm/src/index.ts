@@ -21,7 +21,9 @@ pb.authStore.onChange((auth) => {
 });
 
 export const pairedDevices = writable<string[]>([]);
-export const currentDeviceId = writable("");
+const storedCurrentDeviceId = localStorage.getItem('currentDeviceId');
+export const currentDeviceId = writable(storedCurrentDeviceId || "");
+currentDeviceId.subscribe((value) => localStorage.setItem('currentDeviceId', value));
 
 export interface Device extends Record {
   os_info: string;

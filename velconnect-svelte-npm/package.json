@@ -1,6 +1,6 @@
 {
   "name": "@velaboratory/velconnect-svelte",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Use VEL-Connect with a Svelte dashboard",
   "main": "src/index.js",
   "files": [
