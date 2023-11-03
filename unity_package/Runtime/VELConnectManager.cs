@@ -741,6 +741,21 @@ namespace VELConnect
 			);
 		}
 
+		public static void Unpair()
+		{
+			if (instance.state?.device != null)
+			{
+				PostRequestCallback(
+					instance.velConnectUrl + "/unpair/",
+					JsonConvert.SerializeObject(new Dictionary<string, string>()
+					{
+						{ "device_id", instance.state.device.id },
+						{ "user_id", instance.state.user.id }
+					})
+				);
+			}
+		}
+
 		// TODO
 		public static void UploadFile(string fileName, byte[] fileData, Action<string> successCallback = null)
 		{
