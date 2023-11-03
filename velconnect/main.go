@@ -199,6 +199,59 @@ func main() {
 			apis.ActivityLogger(app),
 		)
 
+		// TODO
+		// e.Router.POST("/pair", func(c echo.Context) error {
+
+		// removes a device from users that own it, and removes its owners
+		// this has no auth protection - maybe there could be a "device secret", that lets devices change themselves securely
+		e.Router.POST("/unpair", func(c echo.Context) error {
+			// we need to:
+			// - remove the device from the list of devices on the user account
+			// - remove the owner from the device
+			// - remove the device datablock from the device
+			// - add a new device datablock to the device
+			//
+			// Inputs:
+			// - device_id
+			// - user_id
+
+			requestData := apis.RequestData(c)
+			deviceId := requestData.Data["device_id"].(string)
+			userId := requestData.Data["user_id"].(string)
+			deviceRecord, deviceErr := app.Dao().FindRecordById("Device", deviceId)
+			userRecord, userErr := app.Dao().FindRecordById("Users", userId)
+			if deviceErr != nil {
+				return apis.NewNotFoundError("The device does not exist.", deviceErr)
+			}
+			if userErr != nil {
+				return apis.NewNotFoundError("The user does not exist.", userErr)
+			}
+			// remove the device from the owner's list of devices
+			userDevicesList := userRecord.GetStringSlice("devices")
+			removeCurrentDevice := func(s string) bool { return s != deviceId }
+			filteredUserDevicesList := filter(userDevicesList, removeCurrentDevice)
+			userRecord.Set("devices", filteredUserDevicesList)
+
+			// modify the device
+			deviceRecord.Set("owner", nil)
+
+			// create new device data
+			collection, err := app.Dao().FindCollectionByNameOrId("DataBlock")
+			if err != nil {
+				log.Fatalln("Couldn't create datablock")
+				return err
+			}
+			deviceDataRecord := models.NewRecord(collection)
+			deviceDataRecord.RefreshId()
+			deviceRecord.Set("data", deviceDataRecord.Id)
+			deviceDataRecord.Set("category", "device")
+			deviceDataRecord.Set("data", "{}")
+
+			return c.JSON(http.StatusOK, deviceRecord)
+		},
+			apis.ActivityLogger(app),
+		)
+
 		return nil
 	})
 
@@ -230,4 +283,13 @@ func mergeDataBlock(requestData *models.RequestData, record *models.Record) {
 
 		record.Set("data", existingDataMap)
 	}
+}
+
+func filter(ss []string, test func(string) bool) (ret []string) {
+	for _, s := range ss {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
 }
