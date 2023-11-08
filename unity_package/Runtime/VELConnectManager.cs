@@ -183,7 +183,7 @@ namespace VELConnect
 			// allows running multiple builds on the same computer
 			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
 			sb.Append(Application.dataPath);
-			sb.Append("EDITOR2");
+			sb.Append("EDITOR");
 #endif
 			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
 			deviceId = id[..15];
@@ -746,7 +746,7 @@ namespace VELConnect
 			if (instance.state?.device != null)
 			{
 				PostRequestCallback(
-					instance.velConnectUrl + "/unpair/",
+					instance.velConnectUrl + "/unpair",
 					JsonConvert.SerializeObject(new Dictionary<string, string>()
 					{
 						{ "device_id", instance.state.device.id },
