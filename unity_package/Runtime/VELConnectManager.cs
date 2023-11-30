@@ -710,7 +710,8 @@ namespace VELConnect
 			{
 				foreach (string key in data.Keys.ToArray())
 				{
-					if (instance.state.room.data[key] == data[key])
+					instance.state.room.data.TryGetValue(key, out string currentValue);
+					if (currentValue == data[key])
 					{
 						data.Remove(key);
 					}
