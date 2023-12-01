@@ -65,8 +65,7 @@ namespace VELConnect
 				/// </summary>
 				public string TryGetData(string key)
 				{
-					string val = null;
-					return userData.data?.TryGetValue(key, out val) == true ? val : null;
+					return userData.TryGetData(key);
 				}
 			}
 
@@ -591,6 +590,41 @@ namespace VELConnect
 		public static string GetRoomData(string key, string defaultValue = null)
 		{
 			return instance != null ? instance.lastState?.room?.TryGetData(key) : defaultValue;
+		}
+
+		public static T GetRoomData<T>(string key, string defaultValue = null)
+		{
+			string value = instance != null ? instance.lastState?.room?.TryGetData(key) : defaultValue;
+
+			if (typeof(T) == typeof(int))
+			{
+				if (int.TryParse(value, out int result))
+				{
+					return (T)Convert.ChangeType(result, typeof(T));
+				}
+
+				return (T)(object)0;
+			}
+			else if (typeof(T) == typeof(double))
+			{
+				if (double.TryParse(value, out double result))
+				{
+					return (T)Convert.ChangeType(result, typeof(T));
+				}
+
+				return (T)(object)0.0;
+			}
+			else if (typeof(T) == typeof(float))
+			{
+				if (float.TryParse(value, out float result))
+				{
+					return (T)Convert.ChangeType(result, typeof(T));
+				}
+
+				return (T)(object)0f;
+			}
+
+			throw new NotSupportedException($"Conversion to type {typeof(T)} is not supported.");
 		}
 
 		/// <summary>
