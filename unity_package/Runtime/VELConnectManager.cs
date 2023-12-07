@@ -281,35 +281,38 @@ namespace VELConnect
 									: null;
 
 								DeviceField fieldName;
-								if (Enum.TryParse(fieldInfo.Name, out fieldName) && newValue != oldValue)
+								if (Enum.TryParse(fieldInfo.Name, out fieldName))
 								{
-									try
+									if (newValue != oldValue)
 									{
-										if (!isInitialState) OnDeviceFieldChanged?.Invoke(fieldName, newValue);
-									}
-									catch (Exception e)
-									{
-										Debug.LogError(e);
-									}
-
-									// send specific listeners data
-									if (deviceFieldCallbacks.ContainsKey(fieldName))
-									{
-										// clear the list of old listeners
-										deviceFieldCallbacks[fieldName].RemoveAll(e => e.keepAliveObject == null);
-
-										// send the callbacks
-										foreach (CallbackListener e in deviceFieldCallbacks[fieldName])
+										try
 										{
-											if (!isInitialState || e.sendInitialState)
+											if (!isInitialState) OnDeviceFieldChanged?.Invoke(fieldName, newValue);
+										}
+										catch (Exception e)
+										{
+											Debug.LogError(e);
+										}
+
+										// send specific listeners data
+										if (deviceFieldCallbacks.ContainsKey(fieldName))
+										{
+											// clear the list of old listeners
+											deviceFieldCallbacks[fieldName].RemoveAll(e => e.keepAliveObject == null);
+
+											// send the callbacks
+											foreach (CallbackListener e in deviceFieldCallbacks[fieldName])
 											{
-												try
+												if (!isInitialState || e.sendInitialState)
 												{
-													e.callback(newValue);
-												}
-												catch (Exception ex)
-												{
-													Debug.LogError(ex);
+													try
+													{
+														e.callback(newValue);
+													}
+													catch (Exception ex)
+													{
+														Debug.LogError(ex);
+													}
 												}
 											}
 										}
