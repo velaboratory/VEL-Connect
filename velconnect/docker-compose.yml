@@ -4,6 +4,6 @@ services:
     build: .
     restart: always
     ports:
-      - "8090:8090"
+      - "8091:8092"
     volumes:
-      - ./pb_data:/pb_data
+      - ./pb_data:/pb/pb_data

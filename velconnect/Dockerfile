@@ -1,20 +1,22 @@
-# syntax=docker/dockerfile:1
-FROM golang:1.18 as build
-WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
+FROM alpine:latest
 
-COPY *.go ./
-COPY migrations/ ./migrations
+ARG PB_VERSION=0.20.7
 
-# Build
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o ./velconnect
-# RUN ./velconnect-pb migrate up
+RUN apk add --no-cache \
+    unzip \
+    ca-certificates
 
-FROM alpine:3.18.2
-COPY --from=build /src/velconnect /velconnect
+# download and unzip PocketBase
+ADD https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_arm64.zip /tmp/pb.zip
+RUN unzip /tmp/pb.zip -d /pb/
 
-EXPOSE 8090
+# uncomment to copy the local pb_migrations dir into the image
+# COPY ./pb_migrations /pb/pb_migrations
 
-# Run
-ENTRYPOINT ["./velconnect", "serve", "--http=0.0.0.0:8090"]
+# uncomment to copy the local pb_hooks dir into the image
+# COPY ./pb_hooks /pb/pb_hooks
+
+EXPOSE 8092
+
+# start PocketBase
+CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8092"]
