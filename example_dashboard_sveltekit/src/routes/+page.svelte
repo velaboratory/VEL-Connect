@@ -1,31 +1,73 @@
-<script>
-	import Counter from './Counter.svelte';
-	import welcome from '$lib/images/svelte-welcome.webp';
-	import welcome_fallback from '$lib/images/svelte-welcome.png';
+<script lang="ts">
+	import { pb } from '@velaboratory/velconnect';
+	import { userData, userModel } from '$lib/stores';
+
+	let username: string;
+	let password: string;
 </script>
 
 <svelte:head>
-	<title>Home</title>
-	<meta name="description" content="Svelte demo app" />
+	<title>VEL-Connect</title>
+	<meta name="description" content="VEL-Connect Example" />
 </svelte:head>
 
 <section>
-	<h1>
-		<span class="welcome">
-			<picture>
-				<source srcset={welcome} type="image/webp" />
-				<img src={welcome_fallback} alt="Welcome" />
-			</picture>
-		</span>
+	<h1>VEL-Connect</h1>
 
-		to your new<br />SvelteKit app
-	</h1>
+	<p></p>
 
-	<h2>
-		try editing <strong>src/routes/+page.svelte</strong>
-	</h2>
+	<div>
+		{#if $userModel}
+			<button
+				on:click={() => {
+					pb.authStore.clear();
+				}}>Log out</button
+			>
+		{:else}
+			<form
+				on:submit|preventDefault={async () => {
+					await pb.collection('Users').authWithPassword(username, password);
+				}}
+			>
+				<label>Username<input bind:value={username} /></label>
+				<label>Password<input bind:value={password} type="password" /></label>
+				<button type="submit">Log in</button>
+			</form>
+		{/if}
+	</div>
 
-	<Counter />
+	{#if $userData}
+		<div id="content">
+			<h4>Devices</h4>
+			<table>
+				<tr>
+					<th>ID</th>
+					<th>Name</th>
+					<th>Room</th>
+				</tr>
+				{#each $userData.expand?.devices as device}
+					<tr>
+						<td>{device.id}</td>
+						<td>{device.friendly_name}</td>
+						<td>{device.current_room}</td>
+					</tr>
+				{/each}
+			</table>
+			<h4>Profiles</h4>
+			<table>
+				<tr>
+					<th>ID</th>
+					<th>Data</th>
+				</tr>
+				{#each $userData.expand?.profiles as profile}
+					<tr>
+						<td>{profile.id}</td>
+						<td><pre><code>{JSON.stringify(profile.data, null, 2)}</code></pre></td>
+					</tr>
+				{/each}
+			</table>
+		</div>
+	{/if}
 </section>
 
 <style>
@@ -39,21 +81,5 @@
 
 	h1 {
 		width: 100%;
-	}
-
-	.welcome {
-		display: block;
-		position: relative;
-		width: 100%;
-		height: 0;
-		padding: 0 0 calc(100% * 495 / 2048) 0;
-	}
-
-	.welcome img {
-		position: absolute;
-		width: 100%;
-		height: 100%;
-		top: 0;
-		display: block;
 	}
 </style>
