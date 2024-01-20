@@ -12,7 +12,7 @@ export let pb: TypedPocketBase = new PocketBase(
 let debugLog = false;
 let initialized = false;
 
-export function initVelConnect(options: VelConnectOptions = {}) {
+export async function initVelConnect(options: VelConnectOptions = {}) {
   if (options.debugLog) {
     debugLog = true;
   }
@@ -23,9 +23,7 @@ export function initVelConnect(options: VelConnectOptions = {}) {
     ) as TypedPocketBase;
     log(`Initialized velconnect on ${pb.baseUrl}`);
   }
-  // pb.authStore.onChange((auth) => {
-  //   console.log("authStore changed", auth);
-  // });
+  await pb.collection("Users").authRefresh();
   initialized = true;
 }
 

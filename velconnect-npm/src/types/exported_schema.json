@@ -6,11 +6,13 @@
         "system": false,
         "schema": [
             {
+                "system": false,
                 "id": "pnhtdbcx",
                 "name": "app_id",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -18,11 +20,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "wkf3zyyb",
                 "name": "room_id",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -30,33 +34,41 @@
                 }
             },
             {
+                "system": false,
                 "id": "f7k9hdoc",
                 "name": "total_users",
                 "type": "number",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
-                    "max": null
+                    "max": null,
+                    "noDecimal": false
                 }
             },
             {
+                "system": false,
                 "id": "uevek8os",
                 "name": "room_users",
                 "type": "number",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
-                    "max": null
+                    "max": null,
+                    "noDecimal": false
                 }
             },
             {
+                "system": false,
                 "id": "coilxuep",
                 "name": "version",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -64,11 +76,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "zee0a2yb",
                 "name": "platform",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -91,11 +105,13 @@
         "system": false,
         "schema": [
             {
+                "system": false,
                 "id": "1tkrnxqf",
                 "name": "os_info",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -103,11 +119,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "knspamfx",
                 "name": "friendly_name",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -115,11 +133,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "qfalwg3c",
                 "name": "modified_by",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -127,11 +147,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "x0zlup7v",
                 "name": "current_app",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -139,11 +161,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "vpzen2th",
                 "name": "current_room",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -151,11 +175,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "d0ckgjhm",
                 "name": "pairing_code",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -163,22 +189,26 @@
                 }
             },
             {
+                "system": false,
                 "id": "hglbl7da",
                 "name": "last_online",
                 "type": "date",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": "",
                     "max": ""
                 }
             },
             {
+                "system": false,
                 "id": "qxsvm1rf",
                 "name": "data",
                 "type": "relation",
-                "system": false,
                 "required": true,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "collectionId": "3qwwkz4wb0lyi78",
                     "cascadeDelete": false,
@@ -190,11 +220,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "nfernq2q",
                 "name": "owner",
                 "type": "relation",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "collectionId": "_pb_users_auth_",
                     "cascadeDelete": false,
@@ -206,11 +238,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "p1aruqz5",
                 "name": "past_owners",
                 "type": "relation",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "collectionId": "_pb_users_auth_",
                     "cascadeDelete": false,
@@ -231,94 +265,19 @@
         "options": {}
     },
     {
-        "id": "3qwwkz4wb0lyi78",
-        "name": "DataBlock",
-        "type": "base",
-        "system": false,
-        "schema": [
-            {
-                "id": "wbifl8pv",
-                "name": "category",
-                "type": "text",
-                "system": false,
-                "required": false,
-                "options": {
-                    "min": null,
-                    "max": null,
-                    "pattern": ""
-                }
-            },
-            {
-                "id": "5a3nwg7m",
-                "name": "modified_by",
-                "type": "text",
-                "system": false,
-                "required": false,
-                "options": {
-                    "min": null,
-                    "max": null,
-                    "pattern": ""
-                }
-            },
-            {
-                "id": "mkzyfsng",
-                "name": "data",
-                "type": "json",
-                "system": false,
-                "required": false,
-                "options": {}
-            },
-            {
-                "id": "a3d7pkoh",
-                "name": "owner",
-                "type": "relation",
-                "system": false,
-                "required": false,
-                "options": {
-                    "collectionId": "_pb_users_auth_",
-                    "cascadeDelete": false,
-                    "minSelect": null,
-                    "maxSelect": 1,
-                    "displayFields": [
-                        "username"
-                    ]
-                }
-            },
-            {
-                "id": "80tmi6fm",
-                "name": "block_id",
-                "type": "text",
-                "system": false,
-                "required": false,
-                "options": {
-                    "min": null,
-                    "max": null,
-                    "pattern": ""
-                }
-            }
-        ],
-        "indexes": [
-            "CREATE INDEX `idx_aYVfg1q` ON `DataBlock` (`block_id`)"
-        ],
-        "listRule": "",
-        "viewRule": "",
-        "createRule": "",
-        "updateRule": "",
-        "deleteRule": null,
-        "options": {}
-    },
-    {
         "id": "_pb_users_auth_",
         "name": "Users",
         "type": "auth",
         "system": false,
         "schema": [
             {
+                "system": false,
                 "id": "users_name",
                 "name": "name",
                 "type": "text",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "min": null,
                     "max": null,
@@ -326,14 +285,14 @@
                 }
             },
             {
+                "system": false,
                 "id": "users_avatar",
                 "name": "avatar",
                 "type": "file",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
-                    "maxSelect": 1,
-                    "maxSize": 5242880,
                     "mimeTypes": [
                         "image/jpeg",
                         "image/png",
@@ -342,15 +301,19 @@
                         "image/webp"
                     ],
                     "thumbs": null,
+                    "maxSelect": 1,
+                    "maxSize": 5242880,
                     "protected": false
                 }
             },
             {
+                "system": false,
                 "id": "1hwaooub",
                 "name": "devices",
                 "type": "relation",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "collectionId": "fupstz47c55s69f",
                     "cascadeDelete": false,
@@ -360,11 +323,13 @@
                 }
             },
             {
+                "system": false,
                 "id": "xvw8arlm",
                 "name": "profiles",
                 "type": "relation",
-                "system": false,
                 "required": false,
+                "presentable": false,
+                "unique": false,
                 "options": {
                     "collectionId": "3qwwkz4wb0lyi78",
                     "cascadeDelete": false,
@@ -390,7 +355,97 @@
             "manageRule": null,
             "minPasswordLength": 6,
             "onlyEmailDomains": null,
+            "onlyVerified": false,
             "requireEmail": false
         }
+    },
+    {
+        "id": "3qwwkz4wb0lyi78",
+        "name": "DataBlock",
+        "type": "base",
+        "system": false,
+        "schema": [
+            {
+                "system": false,
+                "id": "wbifl8pv",
+                "name": "category",
+                "type": "text",
+                "required": false,
+                "presentable": false,
+                "unique": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            },
+            {
+                "system": false,
+                "id": "5a3nwg7m",
+                "name": "modified_by",
+                "type": "text",
+                "required": false,
+                "presentable": false,
+                "unique": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            },
+            {
+                "system": false,
+                "id": "mkzyfsng",
+                "name": "data",
+                "type": "json",
+                "required": false,
+                "presentable": true,
+                "unique": false,
+                "options": {
+                    "maxSize": 2000000
+                }
+            },
+            {
+                "system": false,
+                "id": "a3d7pkoh",
+                "name": "owner",
+                "type": "relation",
+                "required": false,
+                "presentable": false,
+                "unique": false,
+                "options": {
+                    "collectionId": "_pb_users_auth_",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": [
+                        "username"
+                    ]
+                }
+            },
+            {
+                "system": false,
+                "id": "80tmi6fm",
+                "name": "block_id",
+                "type": "text",
+                "required": false,
+                "presentable": false,
+                "unique": false,
+                "options": {
+                    "min": null,
+                    "max": null,
+                    "pattern": ""
+                }
+            }
+        ],
+        "indexes": [
+            "CREATE INDEX `idx_aYVfg1q` ON `DataBlock` (`block_id`)"
+        ],
+        "listRule": "",
+        "viewRule": "",
+        "createRule": "",
+        "updateRule": "",
+        "deleteRule": null,
+        "options": {}
     }
 ]

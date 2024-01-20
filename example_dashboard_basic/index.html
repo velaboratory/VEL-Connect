@@ -1,0 +1,78 @@
+<html>
+
+<head>
+    <title>VEL-Connect</title>
+    <link rel="stylesheet" href="simple.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="./velconnect.min.js"></script>
+</head>
+
+<body>
+    <br />
+    <h1><span class="text-gradient">VEL</span>-Connect</h1>
+    <div>
+        <form onsubmit="login(); return false;" id="loginForm">
+            <label>Username<input id="username" /></label>
+            <label>Password<input id="password" type="password" /></label>
+            <button type="submit">Log in</button>
+        </form>
+        <button id="logoutButton" style="display: none;" onclick="logout();">Log out</button>
+    </div>
+
+    <div id="content">
+        
+        <h4>Devices</h4>
+        <ul id="devicesList"></ul>
+        <h4>Profiles</h4>
+        <ul id="profilesList"></ul>
+    </div>
+
+
+    <script>
+        let pb = window.velconnect.pb;
+
+        if (pb.authStore.isValid) {
+            loginForm.style.display = 'none';
+            logoutButton.style.display = 'block';
+        } else {
+            console.log("Not logged in")
+        }
+
+        pb.authStore.onChange(async () => {
+            if (pb.authStore.isValid) {
+                content.style.display = 'block';
+                loginForm.style.display = 'none';
+                logoutButton.style.display = 'block';
+                devicesList.innerHTML = '';
+                profilesList.innerHTML = '';
+
+                let user = await pb.collection('Users').getOne(pb.authStore.model.id, { expand: 'devices,profiles' })
+                for (let device of user.devices) {
+                    let li = document.createElement('li');
+                    li.innerHTML = device;
+                    devicesList.appendChild(li);
+                }
+                for (let profile of user.profiles) {
+                    let li = document.createElement('li');
+                    li.innerHTML = profile;
+                    profilesList.appendChild(li);
+                }
+            } else {
+                content.style.display = 'none';
+                loginForm.style.display = 'block';
+                logoutButton.style.display = 'none';
+            }
+        }, true);
+
+        async function login() {
+            await pb.collection('Users').authWithPassword(username.value, password.value);
+        }
+
+        function logout() {
+            pb.authStore.clear();
+            location.reload();
+        }
+    </script>
+</body>
+
+</html>

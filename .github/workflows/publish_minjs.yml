@@ -1,0 +1,36 @@
+name: Release Workflow
+
+on:
+  push:
+    tags:
+      - v*.*.*
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and minify
+        run: |
+          npm run build
+          npm run minify
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            dist/velconnect.min.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}

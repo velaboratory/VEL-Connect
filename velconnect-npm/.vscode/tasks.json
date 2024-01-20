@@ -6,7 +6,8 @@
         {
             "label": "Build Pocketbase Types",
             "type": "shell",
-            "command": "npx pocketbase-typegen --json src/types/exported_schema.json -o src/types/pocketbase-types.ts",
+            "command": "npm run generate-types",
+            "detail": "Generates pocketbase types from types/exported_schema.json",
             "problemMatcher": []
         }
     ]

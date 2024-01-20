@@ -9,14 +9,17 @@
   ],
   "scripts": {
     "build": "tsc --module commonjs",
-    "generate-types": "npx pocketbase-typegen --json src/types/exported_schema.json -o src/types/pocketbase-types.ts"
+    "generate-types": "npx pocketbase-typegen --json src/types/exported_schema.json -o src/types/pocketbase-types.ts",
+    "minify": "webpack --mode=production"
   },
   "author": "VEL",
   "license": "MIT",
   "dependencies": {
-    "pocketbase": "^0.20.1"
+    "pocketbase": "^0.20.3"
   },
   "devDependencies": {
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   }
 }
