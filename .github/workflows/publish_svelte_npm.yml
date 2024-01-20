@@ -1,0 +1,25 @@
+name: Publish Package to npmjs
+on:
+  push:
+    branches: ["main"]
+    paths: ["velconnect-svelte-npm/**"]
+
+defaults:
+  run:
+    working-directory: velconnect-svelte-npm
+jobs:
+  pub_npmjs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      # Setup .npmrc file to publish to npm
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm install
+      - run: npm ci
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
