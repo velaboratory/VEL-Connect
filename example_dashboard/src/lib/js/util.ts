@@ -15,7 +15,8 @@ export function prettyDate(date: string | Date | DateTime, includeYear = false) 
 	}
 	// return DateTime.fromISO(date).toFormat("yyyy-LL-dd hh:mm a ZZZZ");
 	const fromNow = DateTime.utc().minus(d.toMillis()).toMillis();
-	const yearReplace = includeYear ? '' : ', 2023';
+	// TODO fix
+	const yearReplace = includeYear ? '' : ', 2024';
 	if (fromNow > 0) {
 		return `${d.toLocaleString(DateTime.DATETIME_MED)} (${humanizeDuration(fromNow, {
 			round: true,

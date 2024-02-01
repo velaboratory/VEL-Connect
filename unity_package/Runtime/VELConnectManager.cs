@@ -185,7 +185,23 @@ namespace VELConnect
 			sb.Append("EDITOR");
 #endif
 			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
-			deviceId = id[..15];
+			deviceId = CreateDeviceId();
+		}
+
+		// Computes 15-char device id compatibly with pocketbase
+		private static string CreateDeviceId()
+		{
+			MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
+			StringBuilder sb = new StringBuilder(SystemInfo.deviceUniqueIdentifier);
+			sb.Append(Application.productName);
+#if UNITY_EDITOR
+			// allows running multiple builds on the same computer
+			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
+			sb.Append(Application.dataPath);
+			sb.Append("EDITOR");
+#endif
+			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
+			return id[..15];
 		}
 
 		// Start is called before the first frame update

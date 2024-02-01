@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	_ "velaboratory/velconnect/migrations"
+	_ "velaboratory/velconnect/pb_migrations"
 
 	"github.com/labstack/echo/v5"
 	"github.com/pocketbase/pocketbase"
