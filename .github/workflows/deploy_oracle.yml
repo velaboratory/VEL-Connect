@@ -6,7 +6,7 @@ on:
     paths: ["velconnect/**"]
 jobs:
   run_pull:
-    name: Pull new version
+    name: Pull new version on Oracle
     runs-on: ubuntu-latest
     steps:
       - name: install ssh keys

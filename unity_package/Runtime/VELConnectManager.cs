@@ -917,7 +917,7 @@ namespace VELConnect
 				case UnityWebRequest.Result.ConnectionError:
 				case UnityWebRequest.Result.DataProcessingError:
 				case UnityWebRequest.Result.ProtocolError:
-					Debug.LogError(url + ": Error: " + webRequest.error + "\n" + Environment.StackTrace);
+					Debug.LogError(url + ": Error: " + webRequest.error + "\n" + webRequest.downloadHandler.text + "\n" + Environment.StackTrace);
 					failureCallback?.Invoke(webRequest.error);
 					break;
 				case UnityWebRequest.Result.Success:
@@ -927,6 +927,23 @@ namespace VELConnect
 
 			uploadHandler.Dispose();
 			webRequest.Dispose();
+		}
+
+		public static void SetDataBlock(string blockId, State.DataBlock dataBlock)
+		{
+			PostRequestCallback(instance.velConnectUrl + "/data_block/" + blockId, JsonConvert.SerializeObject(dataBlock, Formatting.None, new JsonSerializerSettings
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			}));
+		}
+
+		public static void GetDataBlock(string blockId, Action<State.DataBlock> successCallback = null, Action<string> failureCallback = null)
+		{
+			GetRequestCallback(instance.velConnectUrl + "/data_block/" + blockId, data =>
+			{
+				State.DataBlock dict = JsonConvert.DeserializeObject<State.DataBlock>(data);
+				successCallback?.Invoke(dict);
+			}, failureCallback);
 		}
 
 		private void OnApplicationFocus(bool focus)

@@ -1,6 +1,6 @@
 {
     "name": "VEL-Connect",
-    "rootNamespace": "VEL-Connect",
+    "rootNamespace": "VELConnect",
     "references": [
         "GUID:1e55e2c4387020247a1ae212bbcbd381",
         "GUID:343deaaf83e0cee4ca978e7df0b80d21",
