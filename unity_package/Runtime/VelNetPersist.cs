@@ -45,6 +45,16 @@ namespace VELConnect
 		{
 			loading = true;
 			if (debugLogs) Debug.Log($"[VelNetPersist] Loading {Id}");
+			if (syncState == null)
+			{
+				Debug.LogError("SyncState is null for Persist", this);
+				return;
+			}
+			if (syncState.networkObject == null)
+			{
+				Debug.LogError("Network Object is null for SyncState", syncState);
+				return;
+			}
 			VELConnectManager.GetDataBlock(Id, data =>
 			{
 				if (!data.data.TryGetValue("state", out string d))
@@ -71,6 +81,16 @@ namespace VELConnect
 		private void Save()
 		{
 			if (debugLogs) Debug.Log($"[VelNetPersist] Saving {Id}");
+			if (syncState == null)
+			{
+				Debug.LogError("SyncState is null for Persist", this);
+				return;
+			}
+			if (syncState.networkObject == null)
+			{
+				Debug.LogError("Network Object is null for SyncState", syncState);
+				return;
+			}
 			VELConnectManager.SetDataBlock(Id, new VELConnectManager.State.DataBlock()
 			{
 				category = "object_persist",

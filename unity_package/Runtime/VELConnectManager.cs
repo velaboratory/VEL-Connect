@@ -173,19 +173,15 @@ namespace VELConnect
 		{
 			if (instance != null) Debug.LogError("VELConnectManager instance already exists", this);
 			instance = this;
-
-			// Compute device id
-			MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
-			StringBuilder sb = new StringBuilder(SystemInfo.deviceUniqueIdentifier);
-			sb.Append(Application.productName);
-#if UNITY_EDITOR
-			// allows running multiple builds on the same computer
-			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
-			sb.Append(Application.dataPath);
-			sb.Append("EDITOR");
-#endif
-			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
 			deviceId = CreateDeviceId();
+			VelNetManager.OnLocalNetworkObjectSpawned += networkObject =>
+			{
+				if (!networkObject.ownershipLocked)
+				{
+					// TODO 
+					// SetRoomData("spawned_" + networkObject.networkId, networkObject.prefabName);
+				}
+			};
 		}
 
 		// Computes 15-char device id compatibly with pocketbase
