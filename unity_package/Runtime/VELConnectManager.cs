@@ -259,6 +259,15 @@ namespace VELConnect
 					{
 						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
+						if (state.room == null) {
+							state.room = new State.DataBlock
+							{
+								category = "room",
+								modified_by = "Unity",
+								data = null,
+								block_id = Application.productName + "_" + VelNetManager.Room
+							};
+						}
 
 						bool isInitialState = false;
 
@@ -404,7 +413,7 @@ namespace VELConnect
 						}
 
 						// if (state.room.modified_by != DeviceId && state.room.data != null)
-						if (state.room?.data != null)
+						if (state.room.data != null)
 						{
 							foreach (KeyValuePair<string, string> elem in state.room.data)
 							{
@@ -751,6 +760,7 @@ namespace VELConnect
 			State.DataBlock room = new State.DataBlock
 			{
 				category = "room",
+				modified_by = "Unity",
 				data = data
 			};
 
