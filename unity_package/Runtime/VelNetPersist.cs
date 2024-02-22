@@ -73,7 +73,6 @@ namespace VELConnect
 				loading = false;
 			}, s =>
 			{
-				Debug.LogError(s);
 				loading = false;
 			});
 		}

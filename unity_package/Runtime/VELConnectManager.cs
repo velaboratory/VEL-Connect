@@ -259,15 +259,7 @@ namespace VELConnect
 					{
 						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
-						if (state.room == null) {
-							state.room = new State.DataBlock
-							{
-								category = "room",
-								modified_by = "Unity",
-								data = null,
-								block_id = Application.productName + "_" + VelNetManager.Room
-							};
-						}
+						if (state.room == null) return;
 
 						bool isInitialState = false;
 
@@ -923,7 +915,7 @@ namespace VELConnect
 				case UnityWebRequest.Result.ConnectionError:
 				case UnityWebRequest.Result.DataProcessingError:
 				case UnityWebRequest.Result.ProtocolError:
-					Debug.LogError(url + ": Error: " + webRequest.error + "\n" + webRequest.downloadHandler.text + "\n" + Environment.StackTrace);
+					Debug.LogWarning(url + ": Error: " + webRequest.error + "\n" + webRequest.downloadHandler.text + "\n" + Environment.StackTrace);
 					failureCallback?.Invoke(webRequest.error);
 					break;
 				case UnityWebRequest.Result.Success:
