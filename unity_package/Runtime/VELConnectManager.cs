@@ -261,25 +261,7 @@ namespace VELConnect
 						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
 
-						bool isInitialState = false;
-
-						// first load stuff
-						if (lastState == null)
-						{
-							try
-							{
-								OnInitialState?.Invoke(state);
-							}
-							catch (Exception e)
-							{
-								Debug.LogError(e);
-							}
-
-							isInitialState = true;
-							// lastState = state;
-							// return;
-						}
-
+						bool isInitialState = lastState == null;
 
 						// if (state.device.modified_by != DeviceId)
 						{
@@ -478,6 +460,18 @@ namespace VELConnect
 						if (lastState?.device?.pairing_code == null)
 						{
 							Debug.LogError("Pairing code nulllll");
+						}
+
+						if (isInitialState)
+						{
+							try
+							{
+								OnInitialState?.Invoke(state);
+							}
+							catch (Exception e)
+							{
+								Debug.LogError(e);
+							}
 						}
 					});
 				}
@@ -798,6 +792,9 @@ namespace VELConnect
 			);
 		}
 
+		/// <summary>
+		/// Unpairs this device from the current user. 
+		/// </summary>
 		public static void Unpair()
 		{
 			if (instance.state?.device != null)

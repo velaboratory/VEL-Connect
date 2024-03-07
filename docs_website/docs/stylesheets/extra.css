@@ -1,15 +1,17 @@
 :root {
-  --md-primary-fg-color: #666;
+  --md-primary-fg-color: #7a2020;
+  --md-primary-fg-color--light: #ffffff;
+  --md-primary-fg-color--dark: #e4002b;
   --md-primary-bg-color: hsla(0, 0%, 100%, 1);
+  --md-primary-bg-color--light: hsla(0, 0%, 100%, 0.7);
 
   /* --md-accent-fg-color: #ffffff;
   --md-accent-fg-color--transparent: #ffffff11;
   --md-accent-bg-color: hsla(0, 0%, 100%, 1);
   --md-accent-bg-color--light: hsla(0, 0%, 100%, 0.7); */
 }
-
 [data-md-color-scheme="slate"] {
   --md-hue: 34;
-  --md-default-bg-color: #111;
+  --md-default-bg-color: #191818;
   --md-code-bg-color: #252525;
 }
