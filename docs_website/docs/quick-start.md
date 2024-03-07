@@ -139,23 +139,22 @@ public class VelConnectDemo1 : MonoBehaviour
 
 	ExampleJSON dataToPersist = null;
 
-	void persist()
-	{
-		VELConnectManager.SetUserData("mydata", JsonConvert.SerializeObject(dataToPersist));
-	}
     // Start is called before the first frame update
     void Start()
     {
-		VELConnectManager.AddUserDataListener("mydata", this, (s) => {
-			try { //this will deal with any bad data (or null)
-				dataToPersist = JsonConvert.DeserializeObject<ExampleJSON>(s); 
-			} catch (Exception e) {
+		VELConnectManager.OnInitialState += (state) =>
+		{
+			try
+			{ 
+				dataToPersist = JsonConvert.DeserializeObject<ExampleJSON>(state.device.TryGetData("mydata"));
+			}
+			catch (Exception e)
+			{
 				dataToPersist = new ExampleJSON();
 			}
-            
-        }, true);
+		};
 
-	StartCoroutine(exampleProcess());
+		StartCoroutine(exampleProcess());
     }
 
 	IEnumerator exampleProcess()
@@ -173,7 +172,9 @@ public class VelConnectDemo1 : MonoBehaviour
 	}
 	private void OnApplicationQuit()
 	{
-		persist();
+		VELConnectManager.SetUserData("mydata", JsonConvert.SerializeObject(dataToPersist));
 	}
+
 }
+
 ```
