@@ -105,3 +105,75 @@ public class VELConnectTesting : MonoBehaviour
 	}
 }
 ```
+
+---
+
+JSON.Net Example
+
+```cs
+using Newtonsoft.Json;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using VELConnect;
+public class VelConnectDemo1 : MonoBehaviour
+{
+	class ExampleJSON
+	{
+		public string a_string="a"; //you can use initializers
+		public int a_int=0;
+		public List<ExampleChildJSON> a_list = new List<ExampleChildJSON>(); // you can use lists of objects
+	}
+	class ExampleChildJSON
+	{
+		public string a_string; //if you don't, that's fine too, but you probably want a constructor then
+		public int a_int;
+		public ExampleChildJSON() { } //you need to make sure you have a blank constructor for deserialization
+		public ExampleChildJSON(string a_string, int a_int) 
+		{
+			this.a_string = a_string;
+			this.a_int = a_int;
+		}
+	}
+
+	ExampleJSON dataToPersist = null;
+
+	void persist()
+	{
+		VELConnectManager.SetUserData("mydata", JsonConvert.SerializeObject(dataToPersist));
+	}
+    // Start is called before the first frame update
+    void Start()
+    {
+		VELConnectManager.AddUserDataListener("mydata", this, (s) => {
+			try { //this will deal with any bad data (or null)
+				dataToPersist = JsonConvert.DeserializeObject<ExampleJSON>(s); 
+			} catch (Exception e) {
+				dataToPersist = new ExampleJSON();
+			}
+            
+        }, true);
+
+	StartCoroutine(exampleProcess());
+    }
+
+	IEnumerator exampleProcess()
+	{
+		while(dataToPersist == null)
+		{
+			yield return null; //wait for persistent data
+		}
+
+		dataToPersist.a_list.Add(
+			new ExampleChildJSON("" + UnityEngine.Random.Range(0, 10), 
+			UnityEngine.Random.Range(0, 10))
+			);
+		Debug.Log(JsonConvert.SerializeObject(dataToPersist));
+	}
+	private void OnApplicationQuit()
+	{
+		persist();
+	}
+}
+```
