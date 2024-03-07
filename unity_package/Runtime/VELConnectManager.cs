@@ -171,6 +171,7 @@ namespace VELConnect
 
 		private void Awake()
 		{
+			velConnectUrl = velConnectUrl.TrimEnd('/');
 			if (instance != null) Debug.LogError("VELConnectManager instance already exists", this);
 			instance = this;
 			deviceId = CreateDeviceId();
@@ -259,7 +260,6 @@ namespace VELConnect
 					{
 						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
-						if (state.room == null) return;
 
 						bool isInitialState = false;
 
@@ -405,7 +405,7 @@ namespace VELConnect
 						}
 
 						// if (state.room.modified_by != DeviceId && state.room.data != null)
-						if (state.room.data != null)
+						if (state.room?.data != null)
 						{
 							foreach (KeyValuePair<string, string> elem in state.room.data)
 							{
@@ -684,6 +684,11 @@ namespace VELConnect
 				instance.velConnectUrl + "/device/" + deviceId,
 				JsonConvert.SerializeObject(device)
 			);
+		}
+
+		public static void SetUserData(string key, string value)
+		{
+			SetUserData(new Dictionary<string, string> { { key, value } });
 		}
 
 		/// <summary>
