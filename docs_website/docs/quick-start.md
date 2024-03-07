@@ -139,11 +139,11 @@ public class VelConnectDemo1 : MonoBehaviour
 
 	ExampleJSON dataToPersist = null;
 
-    private IEnumerator Start()
+    IEnumerator Start()
 	{
 		VELConnectManager.OnInitialState += (state) =>
 		{
-			var s = state.device.TryGetData("mydata");
+			var s = VELConnectManager.GetUserData("mydata");
 			Debug.Log("Retrieved: " + s);
 			try
 			{
@@ -175,5 +175,6 @@ public class VelConnectDemo1 : MonoBehaviour
 	}
 
 }
+
 
 ```
