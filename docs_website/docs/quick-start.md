@@ -108,7 +108,7 @@ public class VELConnectTesting : MonoBehaviour
 
 ---
 
-JSON.Net Example
+JSON.Net Example that illustrates how to persist a complex object of data using VEL-Connect, initializing at start, and saving on application quit
 
 ```cs
 using Newtonsoft.Json;
@@ -139,36 +139,35 @@ public class VelConnectDemo1 : MonoBehaviour
 
 	ExampleJSON dataToPersist = null;
 
-    // Start is called before the first frame update
-    void Start()
-    {
+    private IEnumerator Start()
+	{
 		VELConnectManager.OnInitialState += (state) =>
 		{
+			var s = state.device.TryGetData("mydata");
+			Debug.Log("Retrieved: " + s);
 			try
-			{ 
-				dataToPersist = JsonConvert.DeserializeObject<ExampleJSON>(state.device.TryGetData("mydata"));
+			{
+				dataToPersist = JsonConvert.DeserializeObject<ExampleJSON>(s);
 			}
 			catch (Exception e)
 			{
-				dataToPersist = new ExampleJSON();
+				Debug.Log("Error serializing state: " + e.Message);
+			}
+			if(dataToPersist == null)
+			{
+				Debug.Log("Null state, initializing");
+				dataToPersist =new ExampleJSON();
 			}
 		};
 
-		StartCoroutine(exampleProcess());
-    }
-
-	IEnumerator exampleProcess()
-	{
-		while(dataToPersist == null)
-		{
-			yield return null; //wait for persistent data
-		}
+		while (dataToPersist == null) yield return null;
 
 		dataToPersist.a_list.Add(
 			new ExampleChildJSON("" + UnityEngine.Random.Range(0, 10), 
 			UnityEngine.Random.Range(0, 10))
 			);
 		Debug.Log(JsonConvert.SerializeObject(dataToPersist));
+
 	}
 	private void OnApplicationQuit()
 	{
