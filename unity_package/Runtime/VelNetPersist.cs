@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json;
 using UnityEngine;
 using VelNet;
 
@@ -7,8 +9,16 @@ namespace VELConnect
 {
 	public class VelNetPersist : MonoBehaviour
 	{
-		public SyncState syncState;
-		private string Id => $"{Application.productName}_{VelNetManager.Room}_{syncState.networkObject.sceneNetworkId}_{syncState.networkObject.syncedComponents.IndexOf(syncState)}";
+		private class ComponentState
+		{
+			public int componentIdx;
+			public string state;
+		}
+
+		public SyncState[] syncStateComponents;
+
+		private string Id => $"{Application.productName}_{VelNetManager.Room}_{syncStateComponents.FirstOrDefault()?.networkObject.sceneNetworkId}";
+
 		private const float interval = 5f;
 		private double nextUpdate;
 		private bool loading;
@@ -19,7 +29,7 @@ namespace VELConnect
 			if (Time.timeAsDouble > nextUpdate && VelNetManager.InRoom && !loading)
 			{
 				nextUpdate = Time.timeAsDouble + interval + UnityEngine.Random.Range(0, interval);
-				if (syncState.networkObject.IsMine)
+				if (syncStateComponents.FirstOrDefault()?.networkObject.IsMine == true)
 				{
 					Save();
 				}
@@ -45,60 +55,77 @@ namespace VELConnect
 		{
 			loading = true;
 			if (debugLogs) Debug.Log($"[VelNetPersist] Loading {Id}");
-			if (syncState == null)
-			{
-				Debug.LogError("SyncState is null for Persist", this);
-				return;
-			}
-			if (syncState.networkObject == null)
-			{
-				Debug.LogError("Network Object is null for SyncState", syncState);
-				return;
-			}
 			VELConnectManager.GetDataBlock(Id, data =>
 			{
-				if (!data.data.TryGetValue("state", out string d))
+				if (!data.data.TryGetValue("components", out string d))
 				{
 					Debug.LogError($"[VelNetPersist] Failed to parse {Id}");
 					return;
 				}
 
-				if (syncState == null)
+
+				List<ComponentState> componentData = JsonConvert.DeserializeObject<List<ComponentState>>(d);
+
+				if (componentData.Count != syncStateComponents.Length)
 				{
-					Debug.LogError("[VelNetPersist] Object doesn't exist anymore");
+					Debug.LogError($"[VelNetPersist] Different number of components");
+					return;
 				}
 
-				syncState.UnpackState(Convert.FromBase64String(d));
+				for (int i = 0; i < syncStateComponents.Length; i++)
+				{
+					syncStateComponents[i].UnpackState(Convert.FromBase64String(componentData[i].state));
+				}
+
 				if (debugLogs) Debug.Log($"[VelNetPersist] Loaded {Id}");
 				loading = false;
-			}, s =>
-			{
-				loading = false;
-			});
+			}, s => { loading = false; });
 		}
 
-		private void Save()
+
+		public void Save(Action<VELConnectManager.State.DataBlock> successCallback = null)
 		{
 			if (debugLogs) Debug.Log($"[VelNetPersist] Saving {Id}");
-			if (syncState == null)
+
+			if (syncStateComponents.FirstOrDefault()?.networkObject == null)
 			{
-				Debug.LogError("SyncState is null for Persist", this);
+				Debug.LogError("First SyncState doesn't have a NetworkObject", this);
 				return;
 			}
-			if (syncState.networkObject == null)
+
+			List<ComponentState> componentData = new List<ComponentState>();
+			foreach (SyncState syncState in syncStateComponents)
 			{
-				Debug.LogError("Network Object is null for SyncState", syncState);
-				return;
+				if (syncState == null)
+				{
+					Debug.LogError("SyncState is null for Persist", this);
+					return;
+				}
+
+				if (syncState.networkObject == null)
+				{
+					Debug.LogError("Network Object is null for SyncState", syncState);
+					return;
+				}
+
+				componentData.Add(new ComponentState()
+				{
+					componentIdx = syncState.networkObject.syncedComponents.IndexOf(syncState),
+					state = Convert.ToBase64String(syncState.PackState())
+				});
 			}
+
 			VELConnectManager.SetDataBlock(Id, new VELConnectManager.State.DataBlock()
 			{
+				id = Id,
+				block_id = Id,
 				category = "object_persist",
 				data = new Dictionary<string, string>
 				{
-					{ "name", syncState.networkObject.name },
-					{ "state", Convert.ToBase64String(syncState.PackState()) }
+					{ "name", syncStateComponents.FirstOrDefault()?.networkObject.name },
+					{ "components", JsonConvert.SerializeObject(componentData) }
 				}
-			});
+			}, s => { successCallback?.Invoke(s); });
 		}
 	}
 }

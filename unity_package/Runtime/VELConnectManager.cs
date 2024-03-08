@@ -71,7 +71,7 @@ namespace VELConnect
 
 			public class DataBlock
 			{
-				public readonly string id;
+				public string id;
 				public readonly DateTime created;
 				public readonly DateTime updated;
 				public string block_id;
@@ -929,12 +929,41 @@ namespace VELConnect
 			webRequest.Dispose();
 		}
 
-		public static void SetDataBlock(string blockId, State.DataBlock dataBlock)
+		public static void SetDataBlock(State.DataBlock dataBlock, Action<State.DataBlock> successCallback = null)
+		{
+			PostRequestCallback(instance.velConnectUrl + "/api/collections/DataBlock/records", JsonConvert.SerializeObject(dataBlock, Formatting.None,
+				new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				}), null, s =>
+			{
+				if (successCallback != null)
+				{
+					State.DataBlock resp = JsonConvert.DeserializeObject<State.DataBlock>(s);
+					successCallback?.Invoke(resp);
+				}
+			});
+		}
+
+		/// <summary>
+		/// Setting with a block ID will update the existing block, otherwise it will create a new one
+		/// </summary>
+		/// <param name="blockId"></param>
+		/// <param name="dataBlock"></param>
+		/// <param name="successCallback"></param>
+		public static void SetDataBlock([CanBeNull] string blockId, State.DataBlock dataBlock, Action<State.DataBlock> successCallback = null)
 		{
 			PostRequestCallback(instance.velConnectUrl + "/data_block/" + blockId, JsonConvert.SerializeObject(dataBlock, Formatting.None, new JsonSerializerSettings
 			{
 				NullValueHandling = NullValueHandling.Ignore
-			}));
+			}), null, s =>
+			{
+				if (successCallback != null)
+				{
+					State.DataBlock resp = JsonConvert.DeserializeObject<State.DataBlock>(s);
+					successCallback?.Invoke(resp);
+				}
+			});
 		}
 
 		public static void GetDataBlock(string blockId, Action<State.DataBlock> successCallback = null, Action<string> failureCallback = null)

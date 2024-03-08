@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	_ "velaboratory/velconnect/pb_migrations"
 
@@ -19,16 +21,18 @@ func main() {
 	app := pocketbase.New()
 
 	// loosely check if it was executed using "go run"
-	// isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
+	isGoRun := strings.HasPrefix(os.Args[0], os.TempDir())
 
-	migratecmd.MustRegister(app, app.RootCmd, &migratecmd.Options{
-		// enable auto creation of migration files when making collection changes
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+		// enable auto creation of migration files when making collection changes in the Admin UI
 		// (the isGoRun check is to enable it only during development)
-		Automigrate: true,
+		Automigrate: isGoRun,
 	})
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		// or you can also use the shorter e.Router.GET("/articles/:slug", handler, middlewares...)
+		e.Router.GET("/*", apis.StaticDirectoryHandler(os.DirFS("./pb_public"), false))
+
 		e.Router.POST("/data_block/:block_id", func(c echo.Context) error {
 
 			dao := app.Dao()
@@ -260,7 +264,7 @@ func main() {
 	}
 }
 
-func mergeDataBlock(requestData *models.RequestData, record *models.Record) {
+func mergeDataBlock(requestData *models.RequestInfo, record *models.Record) {
 
 	// get the new data
 	newData, hasNewData := requestData.Data["data"]
