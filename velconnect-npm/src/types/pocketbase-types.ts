@@ -36,7 +36,7 @@ export type AuthSystemFields<T = never> = {
 
 // Record types for each collection
 
-export type DataBlockRecord<Tdata = unknown> = {
+export type DataBlockRecord<Tdata = { [key: string]: any }> = {
 	block_id?: string
 	category?: string
 	data?: null | Tdata
@@ -74,10 +74,10 @@ export type UsersRecord = {
 }
 
 // Response types include system fields and match responses from the PocketBase API
-export type DataBlockResponse<Tdata = unknown, Texpand = unknown> = Required<DataBlockRecord<Tdata>> & BaseSystemFields<Texpand>
+export type DataBlockResponse<Tdata = { [key: string]: any }, Texpand = unknown> = Required<DataBlockRecord<Tdata>> & BaseSystemFields<Texpand>
 export type DeviceResponse<Texpand = unknown> = Required<DeviceRecord> & BaseSystemFields<Texpand>
 export type UserCountResponse<Texpand = unknown> = Required<UserCountRecord> & BaseSystemFields<Texpand>
-export type UsersResponse<Texpand = unknown> = Required<UsersRecord> & AuthSystemFields<Texpand>
+export type UsersResponse<Texpand = { devices: DeviceResponse[]; profiles: DataBlockResponse[] }> = Required<UsersRecord> & AuthSystemFields<Texpand>
 
 // Types containing all Records and Responses, useful for creating typing helper functions
 

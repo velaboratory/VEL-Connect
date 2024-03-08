@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Autogenerate docs from code",
+            "detail": "Runs generate_docs.py",
+            "command": "python generate_docs.py",
+            "type": "shell",
+            "args": [],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always"
+            },
+            "group": "build"
+        }
+    ]
+}

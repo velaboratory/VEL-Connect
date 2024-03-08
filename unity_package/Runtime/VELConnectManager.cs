@@ -171,21 +171,18 @@ namespace VELConnect
 
 		private void Awake()
 		{
+			velConnectUrl = velConnectUrl.TrimEnd('/');
 			if (instance != null) Debug.LogError("VELConnectManager instance already exists", this);
 			instance = this;
-
-			// Compute device id
-			MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
-			StringBuilder sb = new StringBuilder(SystemInfo.deviceUniqueIdentifier);
-			sb.Append(Application.productName);
-#if UNITY_EDITOR
-			// allows running multiple builds on the same computer
-			// return SystemInfo.deviceUniqueIdentifier + Hash128.Compute(Application.dataPath);
-			sb.Append(Application.dataPath);
-			sb.Append("EDITOR");
-#endif
-			string id = Convert.ToBase64String(md5.ComputeHash(Encoding.UTF8.GetBytes(sb.ToString())));
 			deviceId = CreateDeviceId();
+			VelNetManager.OnLocalNetworkObjectSpawned += networkObject =>
+			{
+				if (!networkObject.ownershipLocked)
+				{
+					// TODO 
+					// SetRoomData("spawned_" + networkObject.networkId, networkObject.prefabName);
+				}
+			};
 		}
 
 		// Computes 15-char device id compatibly with pocketbase
@@ -264,25 +261,7 @@ namespace VELConnect
 						state = JsonConvert.DeserializeObject<State>(json);
 						if (state == null) return;
 
-						bool isInitialState = false;
-
-						// first load stuff
-						if (lastState == null)
-						{
-							try
-							{
-								OnInitialState?.Invoke(state);
-							}
-							catch (Exception e)
-							{
-								Debug.LogError(e);
-							}
-
-							isInitialState = true;
-							// lastState = state;
-							// return;
-						}
-
+						bool isInitialState = lastState == null;
 
 						// if (state.device.modified_by != DeviceId)
 						{
@@ -413,7 +392,7 @@ namespace VELConnect
 							foreach (KeyValuePair<string, string> elem in state.room.data)
 							{
 								string oldValue = null;
-								lastState?.room.data.TryGetValue(elem.Key, out oldValue);
+								lastState?.room?.data.TryGetValue(elem.Key, out oldValue);
 								if (elem.Value != oldValue)
 								{
 									try
@@ -481,6 +460,18 @@ namespace VELConnect
 						if (lastState?.device?.pairing_code == null)
 						{
 							Debug.LogError("Pairing code nulllll");
+						}
+
+						if (isInitialState)
+						{
+							try
+							{
+								OnInitialState?.Invoke(state);
+							}
+							catch (Exception e)
+							{
+								Debug.LogError(e);
+							}
 						}
 					});
 				}
@@ -689,6 +680,11 @@ namespace VELConnect
 			);
 		}
 
+		public static void SetUserData(string key, string value)
+		{
+			SetUserData(new Dictionary<string, string> { { key, value } });
+		}
+
 		/// <summary>
 		/// Sets the 'data' object of the Device table
 		/// </summary>
@@ -755,6 +751,7 @@ namespace VELConnect
 			State.DataBlock room = new State.DataBlock
 			{
 				category = "room",
+				modified_by = "Unity",
 				data = data
 			};
 
@@ -795,6 +792,9 @@ namespace VELConnect
 			);
 		}
 
+		/// <summary>
+		/// Unpairs this device from the current user. 
+		/// </summary>
 		public static void Unpair()
 		{
 			if (instance.state?.device != null)
@@ -917,7 +917,7 @@ namespace VELConnect
 				case UnityWebRequest.Result.ConnectionError:
 				case UnityWebRequest.Result.DataProcessingError:
 				case UnityWebRequest.Result.ProtocolError:
-					Debug.LogError(url + ": Error: " + webRequest.error + "\n" + webRequest.downloadHandler.text + "\n" + Environment.StackTrace);
+					Debug.LogWarning(url + ": Error: " + webRequest.error + "\n" + webRequest.downloadHandler.text + "\n" + Environment.StackTrace);
 					failureCallback?.Invoke(webRequest.error);
 					break;
 				case UnityWebRequest.Result.Success:

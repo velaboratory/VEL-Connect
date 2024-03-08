@@ -1,6 +1,6 @@
 {
   "name": "@velaboratory/velconnect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Use VEL-Connect with a dashboard",
   "main": "src/index.js",
   "files": [
