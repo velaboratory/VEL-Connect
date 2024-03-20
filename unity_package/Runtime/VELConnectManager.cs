@@ -91,6 +91,34 @@ namespace VELConnect
 			}
 		}
 
+		public class PersistObject
+		{
+			public string id;
+			public readonly DateTime created;
+			public readonly DateTime updated;
+			public string app;
+			public string room;
+			public string network_id;
+			public bool spawned;
+			public string name;
+			public string data;
+		}
+		
+		public class RecordList<T>
+		{
+			public int page;
+			public int perPage;
+			public int totalPages;
+			public int totalItems;
+			public List<T> items;
+		}
+
+		public class ComponentState
+		{
+			public int componentIdx;
+			public string state;
+		}
+
 		public class UserCount
 		{
 			[CanBeNull] public readonly string id;
@@ -884,19 +912,24 @@ namespace VELConnect
 			}
 		}
 
-		public static void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null,
+		public static void PostRequestCallback(
+			string url,
+			string postData,
+			Dictionary<string, string> headers = null,
 			Action<string> successCallback = null,
-			Action<string> failureCallback = null)
+			Action<string> failureCallback = null,
+			string method = "POST"
+		)
 		{
-			instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
+			instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback, method));
 		}
 
 
 		private static IEnumerator PostRequestCallbackCo(string url, string postData,
 			Dictionary<string, string> headers = null, Action<string> successCallback = null,
-			Action<string> failureCallback = null)
+			Action<string> failureCallback = null, string method="POST")
 		{
-			UnityWebRequest webRequest = new UnityWebRequest(url, "POST");
+			UnityWebRequest webRequest = new UnityWebRequest(url, method);
 			byte[] bodyRaw = Encoding.UTF8.GetBytes(postData);
 			UploadHandlerRaw uploadHandler = new UploadHandlerRaw(bodyRaw);
 			webRequest.uploadHandler = uploadHandler;
