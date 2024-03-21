@@ -1,25 +1,27 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
 using UnityEngine;
 using VelNet;
 
 namespace VELConnect
 {
-	public class VelNetPersist : MonoBehaviour
+	public class VelNetPersist : NetworkComponent
 	{
-		public SyncState syncState;
-		private string Id => $"{Application.productName}_{VelNetManager.Room}_{syncState.networkObject.sceneNetworkId}_{syncState.networkObject.syncedComponents.IndexOf(syncState)}";
 		private const float interval = 5f;
 		private double nextUpdate;
 		private bool loading;
 		private const bool debugLogs = false;
+		public string persistId;
 
 		private void Update()
 		{
 			if (Time.timeAsDouble > nextUpdate && VelNetManager.InRoom && !loading)
 			{
 				nextUpdate = Time.timeAsDouble + interval + UnityEngine.Random.Range(0, interval);
-				if (syncState.networkObject.IsMine)
+				if (networkObject.IsMine)
 				{
 					Save();
 				}
@@ -44,61 +46,140 @@ namespace VELConnect
 		private void Load()
 		{
 			loading = true;
-			if (debugLogs) Debug.Log($"[VelNetPersist] Loading {Id}");
-			if (syncState == null)
-			{
-				Debug.LogError("SyncState is null for Persist", this);
-				return;
-			}
-			if (syncState.networkObject == null)
-			{
-				Debug.LogError("Network Object is null for SyncState", syncState);
-				return;
-			}
-			VELConnectManager.GetDataBlock(Id, data =>
-			{
-				if (!data.data.TryGetValue("state", out string d))
-				{
-					Debug.LogError($"[VelNetPersist] Failed to parse {Id}");
-					return;
-				}
+			if (debugLogs) Debug.Log($"[VelNetPersist] Loading {name}");
 
-				if (syncState == null)
-				{
-					Debug.LogError("[VelNetPersist] Object doesn't exist anymore");
-				}
-
-				syncState.UnpackState(Convert.FromBase64String(d));
-				if (debugLogs) Debug.Log($"[VelNetPersist] Loaded {Id}");
-				loading = false;
-			}, s =>
+			if (networkObject.isSceneObject)
 			{
-				loading = false;
-			});
+				// It looks like a PocketBase bug is preventing full filtering from happening:
+				// $"/api/collections/PersistObject/records?filter=(app='{Application.productName}' && room='{VelNetManager.Room}' && network_id='{networkObject.sceneNetworkId}')",
+				VELConnectManager.GetRequestCallback(
+					VELConnectManager.VelConnectUrl +
+					$"/api/collections/PersistObject/records?filter=(app='{Application.productName}')",
+					s =>
+					{
+						VELConnectManager.RecordList<VELConnectManager.PersistObject> obj =
+							JsonConvert.DeserializeObject<VELConnectManager.RecordList<VELConnectManager.PersistObject>>(s);
+						obj.items = obj.items.Where(i => i.network_id == networkObject.sceneNetworkId.ToString() && i.room == VelNetManager.Room).ToList();
+						if (obj.items.Count < 1)
+						{
+							Debug.LogError("[VelNetPersist] No data found for " + name);
+							loading = false;
+							return;
+						}
+						else if (obj.items.Count > 1)
+						{
+							Debug.LogError(
+								$"[VelNetPersist] Multiple records found for app='{Application.productName}' && room='{VelNetManager.Room}' && network_id='{networkObject.sceneNetworkId}'. Using the first one.");
+						}
+
+						LoadData(obj.items.FirstOrDefault());
+					}, s => { loading = false; });
+			}
+			else
+			{
+				VELConnectManager.GetRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId, s =>
+					{
+						VELConnectManager.PersistObject obj = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
+						LoadData(obj);
+					},
+					s => { loading = false; });
+			}
 		}
 
-		private void Save()
+		public void LoadData(VELConnectManager.PersistObject obj)
 		{
-			if (debugLogs) Debug.Log($"[VelNetPersist] Saving {Id}");
-			if (syncState == null)
+			if (string.IsNullOrEmpty(obj.data))
 			{
-				Debug.LogError("SyncState is null for Persist", this);
+				Debug.LogError($"[VelNetPersist] No data found for {name}");
+				loading = false;
 				return;
 			}
-			if (syncState.networkObject == null)
+
+			persistId = obj.id;
+
+			using BinaryReader reader = new BinaryReader(new MemoryStream(Convert.FromBase64String(obj.data)));
+			networkObject.UnpackState(reader);
+
+			if (debugLogs) Debug.Log($"[VelNetPersist] Loaded {name}");
+			loading = false;
+		}
+
+
+		public void Save(Action<VELConnectManager.PersistObject> successCallback = null)
+		{
+			if (debugLogs) Debug.Log($"[VelNetPersist] Saving {name}");
+
+			List<SyncState> syncStateComponents = networkObject.syncedComponents.OfType<SyncState>().ToList();
+
+			if (networkObject == null)
 			{
-				Debug.LogError("Network Object is null for SyncState", syncState);
+				Debug.LogError("NetworkObject is null on SyncState", this);
 				return;
 			}
-			VELConnectManager.SetDataBlock(Id, new VELConnectManager.State.DataBlock()
+
+			using BinaryWriter writer = new BinaryWriter(new MemoryStream());
+			networkObject.PackState(writer);
+			string data = Convert.ToBase64String(((MemoryStream)writer.BaseStream).ToArray());
+
+			// if we have a persistId, update the record, otherwise create a new one
+			if (string.IsNullOrEmpty(persistId))
 			{
-				category = "object_persist",
-				data = new Dictionary<string, string>
+				Debug.LogWarning($"We don't have an existing persistId, so we are creating a new record for {networkObject.name}");
+				VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records", JsonConvert.SerializeObject(
+					new VELConnectManager.PersistObject()
+					{
+						app = Application.productName,
+						room = VelNetManager.Room,
+						network_id = networkObject.sceneNetworkId.ToString(),
+						spawned = !networkObject.isSceneObject,
+						name = networkObject.isSceneObject ? networkObject.name : networkObject.prefabName,
+						data = data,
+					}), null, s =>
 				{
-					{ "name", syncState.networkObject.name },
-					{ "state", Convert.ToBase64String(syncState.PackState()) }
-				}
-			});
+					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
+					persistId = resp.id;
+					successCallback?.Invoke(resp);
+				});
+			}
+			else
+			{
+				VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId, JsonConvert.SerializeObject(
+					new VELConnectManager.PersistObject()
+					{
+						app = Application.productName,
+						room = VelNetManager.Room,
+						network_id = networkObject.sceneNetworkId.ToString(),
+						spawned = !networkObject.isSceneObject,
+						name = networkObject.prefabName,
+						data = data,
+					}), null, s =>
+				{
+					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
+					successCallback?.Invoke(resp);
+				}, method: "PATCH");
+			}
+		}
+
+		public void Delete(Action<VELConnectManager.PersistObject> successCallback = null)
+		{
+			if (string.IsNullOrEmpty(persistId))
+			{
+				Debug.LogError("We can't delete an object that doesn't have a persistId");
+				return;
+			}
+
+			VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId, null, null,
+				s =>
+				{
+					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
+					successCallback?.Invoke(resp);
+				}, Debug.LogError,
+				method: "DELETE");
+		}
+
+		public override void ReceiveBytes(byte[] message)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

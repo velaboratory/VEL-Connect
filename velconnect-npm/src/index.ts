@@ -7,7 +7,7 @@ type VelConnectOptions = {
 };
 
 export let pb: TypedPocketBase = new PocketBase(
-  "https://velconnect-v4.ugavel.com"
+  "https://velconnect-v5.ugavel.com"
 ) as TypedPocketBase;
 let debugLog = false;
 let initialized = false;
@@ -19,7 +19,7 @@ export async function initVelConnect(options: VelConnectOptions = {}) {
 
   if (!initialized) {
     pb = new PocketBase(
-      options.url ? options.url : "https://velconnect-v4.ugavel.com"
+      options.url ? options.url : "https://velconnect-v5.ugavel.com"
     ) as TypedPocketBase;
     log(`Initialized velconnect on ${pb.baseUrl}`);
   }

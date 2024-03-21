@@ -71,7 +71,7 @@ namespace VELConnect
 
 			public class DataBlock
 			{
-				public readonly string id;
+				public string id;
 				public readonly DateTime created;
 				public readonly DateTime updated;
 				public string block_id;
@@ -89,6 +89,34 @@ namespace VELConnect
 					return data?.TryGetValue(key, out val) == true ? val : null;
 				}
 			}
+		}
+
+		public class PersistObject
+		{
+			public string id;
+			public readonly DateTime created;
+			public readonly DateTime updated;
+			public string app;
+			public string room;
+			public string network_id;
+			public bool spawned;
+			public string name;
+			public string data;
+		}
+		
+		public class RecordList<T>
+		{
+			public int page;
+			public int perPage;
+			public int totalPages;
+			public int totalItems;
+			public List<T> items;
+		}
+
+		public class ComponentState
+		{
+			public int componentIdx;
+			public string state;
 		}
 
 		public class UserCount
@@ -884,19 +912,24 @@ namespace VELConnect
 			}
 		}
 
-		public static void PostRequestCallback(string url, string postData, Dictionary<string, string> headers = null,
+		public static void PostRequestCallback(
+			string url,
+			string postData,
+			Dictionary<string, string> headers = null,
 			Action<string> successCallback = null,
-			Action<string> failureCallback = null)
+			Action<string> failureCallback = null,
+			string method = "POST"
+		)
 		{
-			instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback));
+			instance.StartCoroutine(PostRequestCallbackCo(url, postData, headers, successCallback, failureCallback, method));
 		}
 
 
 		private static IEnumerator PostRequestCallbackCo(string url, string postData,
 			Dictionary<string, string> headers = null, Action<string> successCallback = null,
-			Action<string> failureCallback = null)
+			Action<string> failureCallback = null, string method="POST")
 		{
-			UnityWebRequest webRequest = new UnityWebRequest(url, "POST");
+			UnityWebRequest webRequest = new UnityWebRequest(url, method);
 			byte[] bodyRaw = Encoding.UTF8.GetBytes(postData);
 			UploadHandlerRaw uploadHandler = new UploadHandlerRaw(bodyRaw);
 			webRequest.uploadHandler = uploadHandler;
@@ -929,12 +962,41 @@ namespace VELConnect
 			webRequest.Dispose();
 		}
 
-		public static void SetDataBlock(string blockId, State.DataBlock dataBlock)
+		public static void SetDataBlock(State.DataBlock dataBlock, Action<State.DataBlock> successCallback = null)
+		{
+			PostRequestCallback(instance.velConnectUrl + "/api/collections/DataBlock/records", JsonConvert.SerializeObject(dataBlock, Formatting.None,
+				new JsonSerializerSettings
+				{
+					NullValueHandling = NullValueHandling.Ignore
+				}), null, s =>
+			{
+				if (successCallback != null)
+				{
+					State.DataBlock resp = JsonConvert.DeserializeObject<State.DataBlock>(s);
+					successCallback?.Invoke(resp);
+				}
+			});
+		}
+
+		/// <summary>
+		/// Setting with a block ID will update the existing block, otherwise it will create a new one
+		/// </summary>
+		/// <param name="blockId"></param>
+		/// <param name="dataBlock"></param>
+		/// <param name="successCallback"></param>
+		public static void SetDataBlock([CanBeNull] string blockId, State.DataBlock dataBlock, Action<State.DataBlock> successCallback = null)
 		{
 			PostRequestCallback(instance.velConnectUrl + "/data_block/" + blockId, JsonConvert.SerializeObject(dataBlock, Formatting.None, new JsonSerializerSettings
 			{
 				NullValueHandling = NullValueHandling.Ignore
-			}));
+			}), null, s =>
+			{
+				if (successCallback != null)
+				{
+					State.DataBlock resp = JsonConvert.DeserializeObject<State.DataBlock>(s);
+					successCallback?.Invoke(resp);
+				}
+			});
 		}
 
 		public static void GetDataBlock(string blockId, Action<State.DataBlock> successCallback = null, Action<string> failureCallback = null)
