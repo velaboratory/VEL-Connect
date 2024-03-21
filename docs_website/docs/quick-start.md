@@ -7,7 +7,7 @@ title: Quick Start
 
 1. [Install the package](/)
 2. Add the VelConnectManager script to an object in your scene. If you transition between scenes in your application, mark the object as `DontDestroyOnLoad`
-3. Set the `Vel Connect Url` field on the component to a valid velconnect server. `https://velconnect-v4.ugavel.com` is useful for VEL projects.
+3. Set the `Vel Connect Url` field on the component to a valid velconnect server. `https://velconnect-v5.ugavel.com` is useful for VEL projects.
 
 ## Usage
 
