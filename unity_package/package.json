@@ -1,7 +1,7 @@
 {
   "name": "edu.uga.engr.vel.vel-connect",
   "displayName": "VEL-Connect",
-  "version": "4.0.8",
+  "version": "4.0.9",
   "unity": "2019.1",
   "description": "Web-based configuration for VR applications",
   "keywords": [],

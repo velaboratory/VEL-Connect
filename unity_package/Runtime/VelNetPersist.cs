@@ -13,7 +13,7 @@ namespace VELConnect
 		private const float interval = 5f;
 		private double nextUpdate;
 		private bool loading;
-		private const bool debugLogs = true;
+		private const bool debugLogs = false;
 		public string persistId;
 
 		private void Update()
@@ -99,20 +99,6 @@ namespace VELConnect
 
 			using BinaryReader reader = new BinaryReader(new MemoryStream(Convert.FromBase64String(obj.data)));
 			networkObject.UnpackState(reader);
-			//
-			// List<SyncState> syncStateComponents = networkObject.syncedComponents.OfType<SyncState>().ToList();
-			// if (obj.data.Count != syncStateComponents.Count)
-			// {
-			// 	Debug.LogError($"[VelNetPersist] Different number of components");
-			// 	loading = false;
-			// 	return;
-			// }
-			//
-			// for (int i = 0; i < syncStateComponents.Count; i++)
-			// {
-			// 	Debug.Log($"[VelNetPersist] Unpacking {obj.name} {syncStateComponents[i].GetType().Name}"); 
-			// 	syncStateComponents[i].UnpackState(Convert.FromBase64String(obj.data[i].state));
-			// }
 
 			if (debugLogs) Debug.Log($"[VelNetPersist] Loaded {name}");
 			loading = false;
@@ -131,28 +117,6 @@ namespace VELConnect
 				return;
 			}
 
-			// List<VELConnectManager.ComponentState> componentData = new List<VELConnectManager.ComponentState>();
-			// foreach (SyncState syncState in syncStateComponents)
-			// {
-			// 	if (syncState == null)
-			// 	{
-			// 		Debug.LogError("SyncState is null for Persist", this);
-			// 		return;
-			// 	}
-			//
-			// 	if (syncState.networkObject == null)
-			// 	{
-			// 		Debug.LogError("Network Object is null for SyncState", syncState);
-			// 		return;
-			// 	}
-			//
-			// 	componentData.Add(new VELConnectManager.ComponentState()
-			// 	{
-			// 		componentIdx = networkObject.syncedComponents.IndexOf(syncState),
-			// 		state = Convert.ToBase64String(syncState.PackState())
-			// 	});
-			// }
-
 			using BinaryWriter writer = new BinaryWriter(new MemoryStream());
 			networkObject.PackState(writer);
 			string data = Convert.ToBase64String(((MemoryStream)writer.BaseStream).ToArray());
@@ -160,7 +124,7 @@ namespace VELConnect
 			// if we have a persistId, update the record, otherwise create a new one
 			if (string.IsNullOrEmpty(persistId))
 			{
-				Debug.LogWarning($"We don't have an existing persistId, so we are creating a new record for {networkObject.prefabName}");
+				Debug.LogWarning($"We don't have an existing persistId, so we are creating a new record for {networkObject.name}");
 				VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records", JsonConvert.SerializeObject(
 					new VELConnectManager.PersistObject()
 					{
@@ -172,8 +136,6 @@ namespace VELConnect
 						data = data,
 					}), null, s =>
 				{
-					Debug.Log(s);
-
 					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
 					persistId = resp.id;
 					successCallback?.Invoke(resp);
@@ -192,8 +154,6 @@ namespace VELConnect
 						data = data,
 					}), null, s =>
 				{
-					Debug.Log(s);
-
 					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
 					successCallback?.Invoke(resp);
 				}, method: "PATCH");
@@ -211,8 +171,6 @@ namespace VELConnect
 			VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId, null, null,
 				s =>
 				{
-					Debug.Log(s);
-
 					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
 					successCallback?.Invoke(resp);
 				}, Debug.LogError,
