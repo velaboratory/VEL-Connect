@@ -22,7 +22,16 @@ namespace VELConnect
 		public static string VelConnectUrl
 		{
 			get => instance.velConnectUrl;
-			set => instance.velConnectUrl = value;
+			set {
+				instance.velConnectUrl = value;
+				SetDeviceField(new Dictionary<DeviceField, string>
+				{
+					{ DeviceField.os_info, SystemInfo.operatingSystem },
+					{ DeviceField.friendly_name, SystemInfo.deviceName },
+					{ DeviceField.current_app, Application.productName },
+					{ DeviceField.pairing_code, PairingCode },
+				});
+			}
 		}
 		private static VELConnectManager instance;
 
