@@ -49,6 +49,7 @@ export type DeviceRecord = {
 	current_room?: string
 	data: RecordIdString
 	friendly_name?: string
+	friendlier_name?: string
 	last_online?: IsoDateString
 	modified_by?: string
 	os_info?: string

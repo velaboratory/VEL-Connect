@@ -19,10 +19,12 @@ namespace VELConnect
 	public class VELConnectManager : MonoBehaviour
 	{
 		public string velConnectUrl = "http://localhost";
+
 		public static string VelConnectUrl
 		{
 			get => instance.velConnectUrl;
-			set {
+			set
+			{
 				instance.velConnectUrl = value;
 				SetDeviceField(new Dictionary<DeviceField, string>
 				{
@@ -33,6 +35,7 @@ namespace VELConnect
 				});
 			}
 		}
+
 		private static VELConnectManager instance;
 
 		public class State
@@ -116,7 +119,7 @@ namespace VELConnect
 			public string name;
 			public string data;
 		}
-		
+
 		public class RecordList<T>
 		{
 			public int page;
@@ -897,7 +900,6 @@ namespace VELConnect
 			}
 		}
 
-
 		public static void GetRequestCallback(string url, Action<string> successCallback = null,
 			Action<string> failureCallback = null)
 		{
@@ -940,12 +942,17 @@ namespace VELConnect
 
 		private static IEnumerator PostRequestCallbackCo(string url, string postData,
 			Dictionary<string, string> headers = null, Action<string> successCallback = null,
-			Action<string> failureCallback = null, string method="POST")
+			Action<string> failureCallback = null, string method = "POST")
 		{
 			UnityWebRequest webRequest = new UnityWebRequest(url, method);
-			byte[] bodyRaw = Encoding.UTF8.GetBytes(postData);
-			UploadHandlerRaw uploadHandler = new UploadHandlerRaw(bodyRaw);
-			webRequest.uploadHandler = uploadHandler;
+			UploadHandlerRaw uploadHandler = null;
+			if (!string.IsNullOrEmpty(postData))
+			{
+				byte[] bodyRaw = Encoding.UTF8.GetBytes(postData);
+				uploadHandler = new UploadHandlerRaw(bodyRaw);
+				webRequest.uploadHandler = uploadHandler;
+			}
+
 			webRequest.downloadHandler = new DownloadHandlerBuffer();
 			webRequest.SetRequestHeader("Content-Type", "application/json");
 			if (headers != null)
@@ -971,7 +978,7 @@ namespace VELConnect
 					break;
 			}
 
-			uploadHandler.Dispose();
+			uploadHandler?.Dispose();
 			webRequest.Dispose();
 		}
 

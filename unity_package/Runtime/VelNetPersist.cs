@@ -12,7 +12,7 @@ namespace VELConnect
 	{
 		private const float interval = 5f;
 		private double nextUpdate;
-		private bool loading;
+		public bool loading;
 		private const bool debugLogs = false;
 		public string persistId;
 
@@ -30,17 +30,15 @@ namespace VELConnect
 
 		private void OnEnable()
 		{
-			VelNetManager.OnJoinedRoom += OnJoinedRoom;
+			if (networkObject.isSceneObject)
+			{
+				VelConnectPersistenceManager.RegisterSceneObject(this);
+			}
 		}
 
 		private void OnDisable()
 		{
-			VelNetManager.OnJoinedRoom -= OnJoinedRoom;
-		}
-
-		private void OnJoinedRoom(string roomName)
-		{
-			Load();
+			VelConnectPersistenceManager.UnregisterSceneObject(this);
 		}
 
 		private void Load()
@@ -52,31 +50,32 @@ namespace VELConnect
 			{
 				// It looks like a PocketBase bug is preventing full filtering from happening:
 				// $"/api/collections/PersistObject/records?filter=(app='{Application.productName}' && room='{VelNetManager.Room}' && network_id='{networkObject.sceneNetworkId}')",
-				VELConnectManager.GetRequestCallback(
-					VELConnectManager.VelConnectUrl +
-					$"/api/collections/PersistObject/records?filter=(app='{Application.productName}')",
-					s =>
-					{
-						VELConnectManager.RecordList<VELConnectManager.PersistObject> obj =
-							JsonConvert.DeserializeObject<VELConnectManager.RecordList<VELConnectManager.PersistObject>>(s);
-						obj.items = obj.items.Where(i => i.network_id == networkObject.sceneNetworkId.ToString() && i.room == VelNetManager.Room).ToList();
-						if (obj.items.Count < 1)
-						{
-							Debug.LogError("[VelNetPersist] No data found for " + name);
-							loading = false;
-							return;
-						}
-						else if (obj.items.Count > 1)
-						{
-							Debug.LogError(
-								$"[VelNetPersist] Multiple records found for app='{Application.productName}' && room='{VelNetManager.Room}' && network_id='{networkObject.sceneNetworkId}'. Using the first one.");
-						}
-
-						LoadData(obj.items.FirstOrDefault());
-					}, s => { loading = false; });
+				// VELConnectManager.GetRequestCallback(
+				// 	VELConnectManager.VelConnectUrl +
+				// 	$"/api/collections/PersistObject/records?filter=(app='{Application.productName}')",
+				// 	s =>
+				// 	{
+				// 		VELConnectManager.RecordList<VELConnectManager.PersistObject> obj =
+				// 			JsonConvert.DeserializeObject<VELConnectManager.RecordList<VELConnectManager.PersistObject>>(s);
+				// 		obj.items = obj.items.Where(i => i.network_id == networkObject.sceneNetworkId.ToString() && i.room == VelNetManager.Room).ToList();
+				// 		if (obj.items.Count < 1)
+				// 		{
+				// 			Debug.LogError("[VelNetPersist] No data found for " + name);
+				// 			loading = false;
+				// 			return;
+				// 		}
+				// 		else if (obj.items.Count > 1)
+				// 		{
+				// 			Debug.LogError(
+				// 				$"[VelNetPersist] Multiple records found for app='{Application.productName}' && room='{VelNetManager.Room}' && network_id='{networkObject.sceneNetworkId}'. Using the first one.");
+				// 		}
+				//
+				// 		LoadData(obj.items.FirstOrDefault());
+				// 	}, s => { loading = false; });
 			}
 			else
 			{
+				Debug.LogError("TODO idk when this would happen");
 				VELConnectManager.GetRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId, s =>
 					{
 						VELConnectManager.PersistObject obj = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
@@ -160,7 +159,7 @@ namespace VELConnect
 			}
 		}
 
-		public void Delete(Action<VELConnectManager.PersistObject> successCallback = null)
+		public void Delete()
 		{
 			if (string.IsNullOrEmpty(persistId))
 			{
@@ -168,12 +167,8 @@ namespace VELConnect
 				return;
 			}
 
-			VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId, null, null,
-				s =>
-				{
-					VELConnectManager.PersistObject resp = JsonConvert.DeserializeObject<VELConnectManager.PersistObject>(s);
-					successCallback?.Invoke(resp);
-				}, Debug.LogError,
+			VELConnectManager.PostRequestCallback(VELConnectManager.VelConnectUrl + "/api/collections/PersistObject/records/" + persistId,
+				null, null, null, Debug.LogError,
 				method: "DELETE");
 		}
 
