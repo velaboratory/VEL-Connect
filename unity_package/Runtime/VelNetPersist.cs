@@ -8,7 +8,7 @@ using VelNet;
 
 namespace VELConnect
 {
-	public class VelNetPersist : NetworkComponent
+	public class VelNetPersist : SyncState
 	{
 		private const float interval = 5f;
 		private double nextUpdate;
@@ -172,9 +172,14 @@ namespace VELConnect
 				method: "DELETE");
 		}
 
-		public override void ReceiveBytes(byte[] message)
+		protected override void SendState(BinaryWriter binaryWriter)
 		{
-			throw new NotImplementedException();
+			binaryWriter.Write(persistId);
+		}
+
+		protected override void ReceiveState(BinaryReader binaryReader)
+		{
+			persistId = binaryReader.ReadString();
 		}
 	}
 }
