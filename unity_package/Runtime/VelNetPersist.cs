@@ -179,7 +179,11 @@ namespace VELConnect
 
 		protected override void ReceiveState(BinaryReader binaryReader)
 		{
-			persistId = binaryReader.ReadString();
+			string newPersistId = binaryReader.ReadString();
+			if (!string.IsNullOrEmpty(newPersistId))
+			{
+				persistId = newPersistId;
+			}
 		}
 	}
 }
